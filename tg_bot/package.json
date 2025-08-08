@@ -4,8 +4,11 @@
   "description": "",
   "main": "src/index.mjs",
   "scripts": {
-    "start": "node src/index.mjs",
-    "dev": "node --watch src/index.mjs",
+    "start": "NODE_ENV=production node src/index.mjs",
+    "dev": "NODE_ENV=development node --watch src/index.mjs",
+    "setup": "cp .env.example .env && echo '✅ .env файл створено! Відредагуй його та додай BOT_TOKEN'",
+    "validate": "node -e \"import('./src/config/environment.js').then(() => console.log('✅ Конфігурація валідна'))\"",
+    "check-token": "node -e \"import('./src/config/environment.js').then(({config}) => console.log('🔑 Токен:', config.bot.maskedToken))\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
