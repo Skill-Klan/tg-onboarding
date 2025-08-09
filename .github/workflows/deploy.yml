@@ -72,7 +72,30 @@ jobs:
       - name: 🌐 Add Server to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+          # Використовуємо більш надійний підхід для додавання хоста
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts || echo "Warning: ssh-keyscan failed, using StrictHostKeyChecking=no"
+          # Альтернативний спосіб - додати конфігурацію SSH
+          cat >> ~/.ssh/config << EOF
+          Host ${{ secrets.HOST }}
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+          
+      - name: 🔗 Test SSH Connection
+        env:
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+        run: |
+          echo "🔗 Testing SSH connection to $USERNAME@$HOST..."
+          ssh -o ConnectTimeout=10 -o BatchMode=yes -p 2222 $USERNAME@$HOST "echo 'SSH connection successful'" || {
+            echo "❌ SSH connection failed!"
+            echo "💡 Possible solutions:"
+            echo "   1. Check HOST secret is correct IP: $HOST"
+            echo "   2. Check USERNAME secret: $USERNAME"
+            echo "   3. Check SSH_PRIVATE_KEY is complete"
+            echo "   4. Ensure server is accessible from GitHub Actions"
+            exit 1
+          }
           
       - name: 🔄 Deploy to Server
         env:
@@ -83,8 +106,8 @@ jobs:
         run: |
           echo "🚀 Starting deployment to $HOST..."
           
-          # Виконання команд на сервері через SSH
-          ssh $USERNAME@$HOST << 'DEPLOY_SCRIPT'
+          # Виконання команд на сервері через SSH (порт 2222)
+          ssh -p 2222 $USERNAME@$HOST << 'DEPLOY_SCRIPT'
             set -e  # Зупинити при помилці
             
             echo "📁 Navigating to deployment directory..."
@@ -135,7 +158,7 @@ jobs:
           echo "🏥 Performing health check..."
           sleep 5
           
-          ssh $USERNAME@$HOST << 'HEALTH_CHECK'
+          ssh -p 2222 $USERNAME@$HOST << 'HEALTH_CHECK'
             cd ${{ env.DEPLOY_PATH }}
             
             # Перевірка що процес запущений
