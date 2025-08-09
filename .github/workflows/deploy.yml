@@ -1,0 +1,180 @@
+name: 🚀 Auto Deploy Bot to Server
+
+# Тригери запуску
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [ closed ]
+
+# Змінні для всього workflow
+env:
+  NODE_VERSION: '18'
+  APP_NAME: 'tg-onboarding-bot'
+  DEPLOY_PATH: '/home/roman/apps/tg-onboarding'
+
+jobs:
+  # Job 1: Тестування та валідація
+  test:
+    name: 🧪 Test & Validate
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'tg_bot/package-lock.json'
+          
+      - name: 📦 Install Dependencies
+        working-directory: ./tg_bot
+        run: npm ci
+        
+      - name: 🔍 Validate Configuration
+        working-directory: ./tg_bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          NODE_ENV: production
+        run: |
+          echo "🔧 Validating bot configuration..."
+          npm run validate
+          
+      - name: ✅ Check Token Security
+        working-directory: ./tg_bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          echo "🔑 Checking token format..."
+          npm run check-token
+
+  # Job 2: Деплой на сервер (тільки після успішного тесту)
+  deploy:
+    name: 🚀 Deploy to Server
+    runs-on: ubuntu-latest
+    needs: test
+    # Деплой тільки при push в main та закритті PR
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+      - name: 🌐 Add Server to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+          
+      - name: 🔄 Deploy to Server
+        env:
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+        run: |
+          echo "🚀 Starting deployment to $HOST..."
+          
+          # Виконання команд на сервері через SSH
+          ssh $USERNAME@$HOST << 'DEPLOY_SCRIPT'
+            set -e  # Зупинити при помилці
+            
+            echo "📁 Navigating to deployment directory..."
+            cd ${{ env.DEPLOY_PATH }} || {
+              echo "❌ Deployment directory not found. Creating..."
+              mkdir -p ${{ env.DEPLOY_PATH }}
+              cd ${{ env.DEPLOY_PATH }}
+            }
+            
+            echo "📥 Pulling latest code..."
+            if [ -d ".git" ]; then
+              git fetch origin
+              git reset --hard origin/main
+            else
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+            
+            echo "📦 Installing dependencies..."
+            cd tg_bot
+            npm ci --only=production
+            
+            echo "🔧 Setting up environment..."
+            echo "BOT_TOKEN=${{ secrets.BOT_TOKEN }}" > .env
+            echo "NODE_ENV=production" >> .env
+            echo "LOG_LEVEL=info" >> .env
+            
+            echo "✅ Validating configuration..."
+            npm run validate
+            
+            echo "🔄 Restarting bot service..."
+            # Зупинити старий процес (якщо є)
+            pkill -f "node.*index.mjs" || echo "No existing process found"
+            
+            # Запустити новий процес в фоні
+            nohup npm start > ../bot.log 2>&1 &
+            
+            echo "✅ Deployment completed successfully!"
+            echo "📊 Bot status:"
+            sleep 2
+            ps aux | grep "node.*index.mjs" | grep -v grep || echo "❌ Bot not running"
+          DEPLOY_SCRIPT
+          
+      - name: 🏥 Health Check
+        env:
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+        run: |
+          echo "🏥 Performing health check..."
+          sleep 5
+          
+          ssh $USERNAME@$HOST << 'HEALTH_CHECK'
+            cd ${{ env.DEPLOY_PATH }}
+            
+            # Перевірка що процес запущений
+            if pgrep -f "node.*index.mjs" > /dev/null; then
+              echo "✅ Bot is running"
+              echo "📊 Process info:"
+              ps aux | grep "node.*index.mjs" | grep -v grep
+            else
+              echo "❌ Bot is not running"
+              echo "📋 Last 10 lines of log:"
+              tail -10 bot.log || echo "No log file found"
+              exit 1
+            fi
+          HEALTH_CHECK
+          
+      - name: 📢 Notify Success
+        if: success()
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "✅ Bot deployed to: ${{ secrets.HOST }}"
+          echo "📊 Commit: ${{ github.sha }}"
+          echo "👤 Author: ${{ github.actor }}"
+          
+      - name: 🚨 Notify Failure
+        if: failure()
+        run: |
+          echo "💥 Deployment failed!"
+          echo "❌ Check logs above for details"
+          echo "🔧 Manual intervention may be required"
+
+  # Job 3: Очищення (завжди виконується)
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [test, deploy]
+    if: always()
+    
+    steps:
+      - name: 🧹 Cleanup Workspace
+        run: |
+          echo "🧹 Cleaning up workspace..."
+          echo "📊 Workflow completed for commit: ${{ github.sha }}"
