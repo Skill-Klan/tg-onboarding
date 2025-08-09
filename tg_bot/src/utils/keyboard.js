@@ -9,12 +9,13 @@ export function getMainKeyboard() {
         [KEYBOARD_BUTTONS.BACKEND]
       ],
       resize_keyboard: true,
-      one_time_keyboard: false
+      one_time_keyboard: false,
+      persistent: true
     }
   };
 }
 
-export function getDirectionActionButtons(track) {
+export function getDirectionActionButtons(track, showChangeDirection = true) {
   const buttons = [];
   
   // CTA кнопка
@@ -30,11 +31,13 @@ export function getDirectionActionButtons(track) {
     }]);
   }
   
-  // Кнопка "Змінити напрям"
-  buttons.push([{
-    text: '🔄 Змінити напрям',
-    callback_data: CALLBACK_DATA.CHANGE_DIRECTION
-  }]);
+  // Кнопка "Змінити напрям" - показуємо тільки якщо потрібно
+  if (showChangeDirection) {
+    buttons.push([{
+      text: '🔄 Змінити напрям',
+      callback_data: CALLBACK_DATA.CHANGE_DIRECTION
+    }]);
+  }
   
   // Кнопка FAQ
   let faqCallback;
