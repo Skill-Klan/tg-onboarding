@@ -1,7 +1,7 @@
 import askName from './askName.js';
 import askPhone from './askPhone.js';
 import { setTrack } from '../../utils/tags.js';
-import { getMainKeyboard } from '../../utils/keyboard.js';
+import { getMainKeyboard, getDirectionActionButtons } from '../../utils/keyboard.js';
 import { AWAITING_STATES, KEYBOARD_BUTTONS } from '../../utils/constants.js';
 
 /**
@@ -16,7 +16,12 @@ export default async function baseHandler(ctx, track, texts) {
 
   // Привітання з інформацією про напрямок
   await ctx.reply(texts.intro, {
-    ...getMainKeyboard(),
+    parse_mode: 'HTML'
+  });
+
+  // Додаємо inline кнопки для дій з напрямком
+  await ctx.reply('Що хочеш зробити далі?', {
+    ...getDirectionActionButtons(track),
     parse_mode: 'HTML'
   });
 
