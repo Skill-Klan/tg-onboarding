@@ -15,7 +15,21 @@ import baHandler from './handlers/ba/baHandler.js';
 import backendHandler from './handlers/backend/backendHandler.js';
 import checkContactData from './middleware/checkContactData.js';
 import requestPDF from './handlers/shared/requestPDF.js';
-import { handleFAQWebApp, handleWebAppData } from './handlers/shared/webappHandler.js';
+import changeDirection from './handlers/shared/changeDirection.js';
+import { faqQA, faqBA, faqBackend, closeFaq } from './handlers/shared/faqHandler.js';
+import bookInterview from './handlers/shared/bookInterview.js';
+
+// Web App handlers (якщо існують)
+let handleFAQWebApp, handleWebAppData;
+try {
+  const webappModule = await import('./handlers/shared/webappHandler.js');
+  handleFAQWebApp = webappModule.handleFAQWebApp;
+  handleWebAppData = webappModule.handleWebAppData;
+} catch (error) {
+  // Web App handlers не знайдено, використовуємо заглушки
+  handleFAQWebApp = () => {};
+  handleWebAppData = () => {};
+}
 
 // 🛡️ Налаштування глобальної обробки помилок
 setupGlobalErrorHandling();
@@ -40,14 +54,20 @@ bot.on('text', checkContactData);
 bot.on('callback_query', checkContactData);
 bot.on('contact', checkContactData);
 
-// FAQ Web App actions
-bot.action('faq_open', handleFAQWebApp);
-bot.on('web_app_data', handleWebAppData);
+// FAQ Web App actions (якщо доступні)
+if (handleFAQWebApp !== (() => {})) {
+  bot.action('faq_open', handleFAQWebApp);
+  bot.on('web_app_data', handleWebAppData);
+}
 
-// Обробка Web App кнопки
-bot.hears('📚 FAQ', handleFAQWebApp);
-
+// Callback actions
 bot.action('get_test_task', requestPDF);
+bot.action('change_direction', changeDirection);
+bot.action('faq_qa', faqQA);
+bot.action('faq_ba', faqBA);
+bot.action('faq_backend', faqBackend);
+bot.action('close_faq', closeFaq);
+bot.action('book_interview', bookInterview);
 
 // 🚀 Безпечний запуск бота з обробкою помилок
 async function startBot() {

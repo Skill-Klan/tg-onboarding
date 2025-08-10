@@ -1,4 +1,5 @@
 import askPhone from '../handlers/shared/askPhone.js';
+import sendPDF from '../handlers/shared/sendPDF.js';
 import { sendWebhook } from '../utils/webhook.js';
 import { AWAITING_STATES, CALLBACK_DATA, KEYBOARD_BUTTONS } from '../utils/constants.js';
 
@@ -6,21 +7,44 @@ function canProceed(ctx) {
   return ctx.session.name && ctx.session.phone && ctx.session.tags?.track;
 }
 
-function showMainMenu(ctx) {
-  return ctx.reply(
-    `✅ Реєстрація успішна.\n\nОбери напрям, що тобі цікавий 👇`,
-    {
-      reply_markup: {
-        keyboard: [
-          [KEYBOARD_BUTTONS.TESTING],
-          [KEYBOARD_BUTTONS.BUSINESS_ANALYTICS],
-          [KEYBOARD_BUTTONS.BACKEND]
-        ],
-        resize_keyboard: true
-      },
-      parse_mode: 'HTML'
-    }
-  );
+// Функція showRegistrationSuccess видалена, оскільки повідомлення більше не потрібне
+
+// Функція showMainMenu видалена, оскільки меню напрямків тепер постійно відображається
+
+async function executePendingAction(ctx) {
+  const pendingAction = ctx.session.pendingAction;
+  if (!pendingAction) return null;
+
+  // Очищаємо pending action
+  delete ctx.session.pendingAction;
+
+  switch (pendingAction) {
+    case 'request_pdf':
+      const track = ctx.session.tags?.track;
+      if (track) {
+        const now = new Date();
+        ctx.session.tags.start_datetime = now.toISOString();
+        return sendPDF(ctx, track);
+      }
+      break;
+    case 'book_interview':
+      // Показуємо повідомлення про успішне бронювання
+      return ctx.reply(
+        `📅 <b>Заявка на інтерв'ю прийнята!</b>
+
+Ваші дані:
+👤 Ім'я: ${ctx.session.name}
+📱 Телефон: ${ctx.session.phone}
+💻 Напрям: Backend
+
+Наші менеджери зв'яжуться з вами найближчим часом для узгодження зручного часу інтерв'ю.
+
+Дякуємо за ваш інтерес до SkillKlan! 🚀`,
+        { parse_mode: 'HTML' }
+      );
+      break;
+  }
+  return null;
 }
 
 export default async function (ctx, next) {
@@ -38,8 +62,12 @@ export default async function (ctx, next) {
       return askPhone(ctx);
     }
 
-    // Після введення імені завжди показуємо меню вибору напрямків
-    return showMainMenu(ctx);
+    // Якщо всі дані є, виконуємо pending action
+    const pendingResult = await executePendingAction(ctx);
+    if (pendingResult) return pendingResult;
+    
+    // Меню напрямків вже постійно відображається, тому не потрібно додаткове повідомлення
+    return;
   }
 
   // 🟢 Обробка номера через кнопку
@@ -52,8 +80,12 @@ export default async function (ctx, next) {
       return ctx.reply('Ще потрібно ввести ім\'я.', { parse_mode: 'HTML' });
     }
 
-    // Після надсилання контакту завжди показуємо меню вибору напрямків
-    return showMainMenu(ctx);
+    // Якщо всі дані є, виконуємо pending action
+    const pendingResult = await executePendingAction(ctx);
+    if (pendingResult) return pendingResult;
+    
+    // Меню напрямків вже постійно відображається, тому не потрібно додаткове повідомлення
+    return;
   }
 
   // 🟡 Обробка номера текстом
@@ -69,8 +101,12 @@ export default async function (ctx, next) {
     ctx.session.phone = text;
     ctx.session.awaiting = null;
 
-    // Після введення номера текстом завжди показуємо меню вибору напрямків
-    return showMainMenu(ctx);
+    // Якщо всі дані є, виконуємо pending action
+    const pendingResult = await executePendingAction(ctx);
+    if (pendingResult) return pendingResult;
+    
+    // Меню напрямків вже постійно відображається, тому не потрібно додаткове повідомлення
+    return;
   }
 
   // 🔵 Обробка кнопки «Я готовий здати тестове»
@@ -81,10 +117,6 @@ export default async function (ctx, next) {
     ctx.session.awaiting = null;
 
     await ctx.answerCbQuery();
-    await ctx.reply('✅ Ми передали твої дані менеджеру. Очікуй дзвінка.', {
-      reply_markup: { remove_keyboard: true },
-      parse_mode: 'HTML'
-    });
     return sendWebhook(ctx);
   }
 

@@ -1,11 +1,9 @@
-import { getMainKeyboard } from '../../utils/keyboard.js';
 import commonTexts from '../../texts/common.js';
 import { AWAITING_STATES, CALLBACK_DATA } from '../../utils/constants.js';
 
 export default async function sendPDF(ctx, track) {
-  // 1. Повідомлення з клавіатурою напрямків
+  // 1. Повідомлення про надсилання тесту
   await ctx.reply(commonTexts.sendingTest, {
-    ...getMainKeyboard(),
     parse_mode: 'HTML'
   });
 
