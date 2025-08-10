@@ -1,6 +1,6 @@
-/* FAQ Mini App Styles */
+/* FAQ Mini App Styles - Оновлено відповідно до нових інструкцій */
 :root {
-    /* Telegram WebApp CSS Variables */
+    /* Telegram WebApp CSS Variables - автоматично встановлюються */
     --tg-color-scheme: light;
     --tg-theme-bg-color: #ffffff;
     --tg-theme-text-color: #000000;
@@ -11,15 +11,37 @@
     --tg-theme-secondary-bg-color: #f1f1f1;
     
     /* Custom variables */
-    --header-height: 60px;
-    --bottom-button-height: 80px;
+    --header-height: 64px;
+    --quick-actions-height: 80px;
     --safe-area-top: env(safe-area-inset-top, 0px);
     --safe-area-bottom: env(safe-area-inset-bottom, 0px);
     --safe-area-left: env(safe-area-inset-left, 0px);
     --safe-area-right: env(safe-area-inset-right, 0px);
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Border radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+    --transition-slow: 0.35s ease;
 }
 
-/* Dark theme */
+/* Dark theme - автоматично застосовується через Telegram */
 [data-theme="dark"] {
     --tg-theme-bg-color: #1c1c1e;
     --tg-theme-text-color: #ffffff;
@@ -37,10 +59,11 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: var(--tg-theme-bg-color);
     color: var(--tg-theme-text-color);
-    line-height: 1.5;
+    line-height: 1.6;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 .app {
@@ -59,119 +82,188 @@ body {
     top: 0;
     z-index: 100;
     background: var(--tg-theme-bg-color);
-    border-bottom: 1px solid var(--tg-theme-hint-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--tg-theme-secondary-bg-color);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all var(--transition-normal);
 }
 
 .header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
+    padding: var(--spacing-md);
     height: var(--header-height);
 }
 
 .header-title {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: var(--tg-theme-text-color);
+    transition: color var(--transition-normal);
 }
 
-.back-button {
+.header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.icon-button {
     background: none;
     border: none;
     color: var(--tg-theme-text-color);
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.8;
 }
 
-.back-button:hover {
+.icon-button:hover {
     background: var(--tg-theme-secondary-bg-color);
+    opacity: 1;
+    transform: scale(1.05);
 }
 
-.back-button:active {
+.icon-button:active {
     transform: scale(0.95);
 }
 
-/* Search */
+/* Search Container */
 .search-container {
-    padding: 16px;
     background: var(--tg-theme-bg-color);
+    border-bottom: 1px solid var(--tg-theme-secondary-bg-color);
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .search-input {
     width: 100%;
-    padding: 12px 16px;
-    border: 1px solid var(--tg-theme-hint-color);
-    border-radius: 12px;
-    font-size: 16px;
-    background: var(--tg-theme-secondary-bg-color);
+    padding: var(--spacing-md);
+    padding-right: 48px;
+    border: 2px solid var(--tg-theme-secondary-bg-color);
+    border-radius: var(--radius-md);
+    background: var(--tg-theme-bg-color);
     color: var(--tg-theme-text-color);
-    transition: all 0.2s ease;
+    font-size: 16px;
+    transition: all var(--transition-normal);
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--tg-theme-button-color);
-    background: var(--tg-theme-bg-color);
+    box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.1);
 }
 
 .search-input::placeholder {
     color: var(--tg-theme-hint-color);
 }
 
+.clear-search {
+    position: absolute;
+    right: var(--spacing-sm);
+    background: none;
+    border: none;
+    color: var(--tg-theme-hint-color);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+}
+
+.clear-search:hover {
+    color: var(--tg-theme-text-color);
+    background: var(--tg-theme-secondary-bg-color);
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
+    padding: var(--spacing-md);
     overflow-y: auto;
-    padding: 0 16px 16px;
 }
 
 .faq-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Loading State */
+.loading-state {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    text-align: center;
+    color: var(--tg-theme-hint-color);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--tg-theme-secondary-bg-color);
+    border-top: 3px solid var(--tg-theme-button-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: var(--spacing-md);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* FAQ Sections */
 .faq-section {
     background: var(--tg-theme-bg-color);
-    border: 1px solid var(--tg-theme-hint-color);
-    border-radius: 12px;
+    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-sm);
 }
 
 .faq-section:hover {
-    border-color: var(--tg-theme-button-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .section-header {
-    background: var(--tg-theme-button-color);
-    color: var(--tg-theme-button-text-color);
-    padding: 16px;
-    font-weight: 600;
-    font-size: 16px;
+    padding: var(--spacing-md);
+    background: var(--tg-theme-secondary-bg-color);
     cursor: pointer;
-    transition: background-color 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    transition: background-color var(--transition-fast);
 }
 
 .section-header:hover {
-    background: var(--tg-theme-link-color);
+    background: var(--tg-theme-hint-color);
 }
 
-.section-header .expand-icon {
-    transition: transform 0.2s ease;
+.section-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--tg-theme-text-color);
+    margin: 0;
+}
+
+.expand-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform var(--transition-normal);
 }
 
 .section-header.expanded .expand-icon {
@@ -181,7 +273,7 @@ body {
 .section-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    transition: max-height var(--transition-slow);
 }
 
 .section-content.expanded {
@@ -189,35 +281,45 @@ body {
 }
 
 .section-items {
-    padding: 16px;
+    padding: var(--spacing-md);
 }
 
+/* FAQ Items */
 .faq-item {
-    margin-bottom: 16px;
-    padding: 16px;
-    background: var(--tg-theme-secondary-bg-color);
-    border-radius: 8px;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--tg-theme-secondary-bg-color);
+    padding: var(--spacing-md) 0;
+    transition: all var(--transition-fast);
+}
+
+.faq-item:last-child {
+    border-bottom: none;
 }
 
 .faq-item:hover {
-    border-color: var(--tg-theme-hint-color);
+    background: var(--tg-theme-secondary-bg-color);
+    margin: 0 calc(-1 * var(--spacing-md));
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
 }
 
 .faq-question {
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--tg-theme-text-color);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    font-weight: 500;
+    color: var(--tg-theme-text-color);
+    transition: color var(--transition-fast);
+}
+
+.faq-question:hover {
+    color: var(--tg-theme-button-color);
 }
 
 .faq-question .expand-icon {
-    transition: transform 0.2s ease;
-    color: var(--tg-theme-hint-color);
+    width: 16px;
+    height: 16px;
+    opacity: 0.6;
 }
 
 .faq-question.expanded .expand-icon {
@@ -227,138 +329,147 @@ body {
 .faq-answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
-    color: var(--tg-theme-text-color);
+    transition: max-height var(--transition-normal);
+    color: var(--tg-theme-hint-color);
+    margin-top: var(--spacing-sm);
+    line-height: 1.6;
 }
 
 .faq-answer.expanded {
     max-height: 500px;
-    margin-top: 8px;
+    margin-top: var(--spacing-md);
 }
 
+/* FAQ Links */
 .faq-links {
-    margin-top: 12px;
+    margin-top: var(--spacing-md);
     display: flex;
-    gap: 8px;
     flex-wrap: wrap;
+    gap: var(--spacing-sm);
 }
 
 .faq-link {
-    display: inline-block;
-    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
     background: var(--tg-theme-button-color);
     color: var(--tg-theme-button-text-color);
     text-decoration: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 14px;
-    transition: background-color 0.2s ease;
+    font-weight: 500;
+    transition: all var(--transition-fast);
 }
 
 .faq-link:hover {
     background: var(--tg-theme-link-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
-/* Bottom Button */
-.bottom-button-container {
-    padding: 16px;
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
     background: var(--tg-theme-bg-color);
-    border-top: 1px solid var(--tg-theme-hint-color);
-    padding-bottom: calc(16px + var(--safe-area-bottom));
+    border-top: 1px solid var(--tg-theme-secondary-bg-color);
+    margin-top: auto;
 }
 
-.main-button {
-    width: 100%;
-    padding: 16px;
+.quick-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
     background: var(--tg-theme-button-color);
     color: var(--tg-theme-button-text-color);
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
 }
 
-.main-button:hover {
+.quick-action-btn:hover {
     background: var(--tg-theme-link-color);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-.main-button:active {
+.quick-action-btn:active {
     transform: translateY(0);
-}
-
-/* Loading States */
-.loading {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--tg-theme-hint-color);
-}
-
-.loading-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--tg-theme-hint-color);
-    border-top: 3px solid var(--tg-theme-button-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 16px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    box-shadow: var(--shadow-sm);
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: var(--spacing-xl);
     color: var(--tg-theme-hint-color);
 }
 
 /* Responsive Design */
-@media (max-width: 480px) {
-    .header-content {
-        padding: 12px 16px;
+@media (max-width: 768px) {
+    .header-title {
+        font-size: 20px;
     }
     
-    .search-container {
-        padding: 12px 16px;
+    .quick-actions {
+        flex-direction: column;
     }
     
-    .main-content {
-        padding: 0 12px 12px;
+    .faq-section {
+        margin-bottom: var(--spacing-sm);
     }
     
-    .bottom-button-container {
-        padding: 12px 16px;
+    .section-header,
+    .section-items {
+        padding: var(--spacing-sm);
     }
 }
 
-/* Smooth scrolling */
+@media (max-width: 480px) {
+    .header-content {
+        padding: var(--spacing-sm);
+    }
+    
+    .main-content {
+        padding: var(--spacing-sm);
+    }
+    
+    .search-container {
+        padding: var(--spacing-sm);
+    }
+}
+
+/* Accessibility */
 html {
     scroll-behavior: smooth;
 }
 
-/* Focus styles for accessibility */
 *:focus {
     outline: 2px solid var(--tg-theme-button-color);
     outline-offset: 2px;
 }
 
-/* High contrast mode support */
+/* High Contrast Mode */
 @media (prefers-contrast: high) {
     .faq-section {
         border-width: 2px;
     }
     
     .faq-item {
-        border-width: 1px;
+        border-bottom-width: 2px;
     }
 }
 
-/* Reduced motion support */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;

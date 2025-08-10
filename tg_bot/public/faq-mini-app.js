@@ -1,15 +1,17 @@
 /**
- * FAQ Mini App для Telegram
- * Відповідно до ТЗ: простий Mini App-FAQ з пошуком та акордеонами
+ * FAQ Mini App для Telegram - Оновлено відповідно до нових інструкцій
+ * Використовує telegram-utils.js та нативні методи Telegram
  */
 
 class FAQMiniApp {
     constructor() {
         this.tg = null;
+        this.telegramUtils = null;
         this.faqData = null;
         this.currentTheme = 'light';
         this.searchIndex = new Map();
         this.isInitialized = false;
+        this.searchActive = false;
         
         this.init();
     }
@@ -26,8 +28,8 @@ class FAQMiniApp {
 
             this.tg = window.Telegram.WebApp;
             
-            // Ініціалізація Telegram WebApp
-            this.initTelegramWebApp();
+            // Ініціалізація Telegram WebApp через telegram-utils.js
+            this.telegramUtils = new TelegramUtils();
             
             // Завантаження FAQ даних
             await this.loadFAQData();
@@ -54,114 +56,150 @@ class FAQMiniApp {
     }
 
     /**
-     * Ініціалізація Telegram WebApp
+     * Налаштування UI елементів
      */
-    initTelegramWebApp() {
-        // Готовність додатку
-        this.tg.ready();
+    setupUI() {
+        // Налаштування кнопок в header
+        this.setupHeaderButtons();
         
-        // Налаштування кнопки "Назад"
-        this.tg.BackButton.show();
+        // Налаштування пошуку
+        this.setupSearchUI();
         
-        // Встановлення теми
+        // Налаштування швидких дій
+        this.setupQuickActions();
+        
+        // Застосовуємо поточну тему
         this.updateTheme();
-        
-        // Перевірка режиму запуску
-        this.checkLaunchMode();
-        
-        // Налаштування обробників подій Telegram
-        this.setupTelegramEventHandlers();
     }
 
     /**
-     * Перевірка режиму запуску
+     * Налаштування кнопок в header
      */
-    checkLaunchMode() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const mode = urlParams.get('mode');
-        
-        // За замовчуванням запускаємо в compact режимі
-        if (mode !== 'fullscreen' && !this.tg.isExpanded) {
-            // Розгортаємо додаток для кращого UX
-            this.tg.expand();
+    setupHeaderButtons() {
+        const searchToggle = document.getElementById('searchToggle');
+        const menuToggle = document.getElementById('menuToggle');
+
+        if (searchToggle) {
+            searchToggle.addEventListener('click', () => {
+                this.toggleSearch();
+            });
         }
-    }
 
-    /**
-     * Налаштування обробників подій Telegram
-     */
-    setupTelegramEventHandlers() {
-        // Кнопка "Назад"
-        this.tg.onEvent('backButtonClicked', () => {
-            this.handleBackButton();
-        });
-
-        // Зміна теми
-        this.tg.onEvent('themeChanged', () => {
-            this.updateTheme();
-        });
-
-        // Зміна розміру вікна
-        this.tg.onEvent('viewportChanged', () => {
-            this.handleViewportChange();
-        });
-
-        // Активація/деактивація
-        this.tg.onEvent('activated', () => {
-            console.log('Mini App активовано');
-        });
-
-        this.tg.onEvent('deactivated', () => {
-            console.log('Mini App деактивовано');
-        });
-    }
-
-    /**
-     * Обробка кнопки "Назад"
-     */
-    handleBackButton() {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            this.tg.close();
-        }
-    }
-
-    /**
-     * Оновлення теми
-     */
-    updateTheme() {
-        const colorScheme = this.tg.colorScheme;
-        this.currentTheme = colorScheme;
-        
-        // Встановлення CSS змінних
-        document.documentElement.style.setProperty('--tg-color-scheme', colorScheme);
-        document.documentElement.setAttribute('data-theme', colorScheme);
-        
-        // Оновлення CSS змінних з Telegram
-        const themeParams = this.tg.themeParams;
-        if (themeParams) {
-            Object.entries(themeParams).forEach(([key, value]) => {
-                document.documentElement.style.setProperty(`--tg-${key}`, value);
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                this.showMenu();
             });
         }
     }
 
     /**
-     * Обробка зміни розміру вікна
+     * Налаштування пошуку
      */
-    handleViewportChange() {
-        // Використовуємо стабільну висоту для уникнення мерехтіння
-        const viewportHeight = this.tg.viewportStableHeight || this.tg.viewportHeight;
-        const safeArea = this.tg.safeAreaInset || this.tg.contentSafeAreaInset;
-        
-        if (viewportHeight) {
-            document.documentElement.style.setProperty('--tg-viewport-height', `${viewportHeight}px`);
+    setupSearchUI() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearch = document.getElementById('clearSearch');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.handleSearch(e.target.value);
+            });
+
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.toggleSearch();
+                }
+            });
         }
+
+        if (clearSearch) {
+            clearSearch.addEventListener('click', () => {
+                this.clearSearch();
+            });
+        }
+    }
+
+    /**
+     * Налаштування швидких дій
+     */
+    setupQuickActions() {
+        const contactSupport = document.getElementById('contactSupport');
+        const aboutSchool = document.getElementById('aboutSchool');
+
+        if (contactSupport) {
+            contactSupport.addEventListener('click', () => {
+                this.contactSupport();
+            });
+        }
+
+        if (aboutSchool) {
+            aboutSchool.addEventListener('click', () => {
+                this.showAboutSchool();
+            });
+        }
+    }
+
+    /**
+     * Перемикання пошуку
+     */
+    toggleSearch() {
+        const searchContainer = document.getElementById('searchContainer');
+        const searchInput = document.getElementById('searchInput');
         
-        if (safeArea) {
-            Object.entries(safeArea).forEach(([key, value]) => {
-                document.documentElement.style.setProperty(`--safe-area-${key}`, `${value}px`);
+        if (this.searchActive) {
+            searchContainer.style.display = 'none';
+            this.searchActive = false;
+            this.clearSearch();
+        } else {
+            searchContainer.style.display = 'block';
+            this.searchActive = true;
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }
+    }
+
+    /**
+     * Показати меню
+     */
+    showMenu() {
+        if (this.telegramUtils) {
+            this.telegramUtils.showPopup({
+                title: 'Меню',
+                message: 'Оберіть опцію:',
+                buttons: [
+                    {
+                        id: 'search',
+                        type: 'default',
+                        text: '🔍 Пошук'
+                    },
+                    {
+                        id: 'support',
+                        type: 'default',
+                        text: '💬 Підтримка'
+                    },
+                    {
+                        id: 'about',
+                        type: 'default',
+                        text: 'ℹ️ Про школу'
+                    },
+                    {
+                        id: 'cancel',
+                        type: 'cancel',
+                        text: 'Скасувати'
+                    }
+                ]
+            }, (buttonId) => {
+                switch (buttonId) {
+                    case 'search':
+                        this.toggleSearch();
+                        break;
+                    case 'support':
+                        this.contactSupport();
+                        break;
+                    case 'about':
+                        this.showAboutSchool();
+                        break;
+                }
             });
         }
     }
@@ -171,27 +209,21 @@ class FAQMiniApp {
      */
     async loadFAQData() {
         try {
-            // Завантажуємо дані з локального файлу
-            const response = await fetch('./faq-data.json');
+            const response = await fetch('faq-data.json');
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
             this.faqData = await response.json();
-            
-            // Створюємо індекс для пошуку
             this.createSearchIndex();
-            
         } catch (error) {
             console.error('Помилка завантаження FAQ даних:', error);
-            // Використовуємо тестові дані як fallback
             this.faqData = this.getFallbackFAQData();
             this.createSearchIndex();
         }
     }
 
     /**
-     * Створення пошукового індексу
+     * Створення індексу для пошуку
      */
     createSearchIndex() {
         this.searchIndex.clear();
@@ -199,14 +231,14 @@ class FAQMiniApp {
         if (!this.faqData || !this.faqData.sections) return;
         
         this.faqData.sections.forEach(section => {
-            // Індексуємо заголовок секції
+            // Додаємо заголовок секції
             this.addToSearchIndex(section.title, section.id, 'section');
             
-            // Індексуємо питання та відповіді
+            // Додаємо питання та відповіді
             if (section.items) {
                 section.items.forEach(item => {
-                    this.addToSearchIndex(item.q, `${section.id}-${item.id || Math.random()}`, 'question');
-                    this.addToSearchIndex(item.a, `${section.id}-${item.id || Math.random()}`, 'answer');
+                    this.addToSearchIndex(item.q, item.id, 'question');
+                    this.addToSearchIndex(item.a, item.id, 'answer');
                 });
             }
         });
@@ -219,63 +251,39 @@ class FAQMiniApp {
         if (!text) return;
         
         const words = text.toLowerCase()
-            .replace(/[^\w\sа-яёіїє]/gi, ' ')
+            .replace(/[^\w\sа-яіїєґ]/g, '')
             .split(/\s+/)
             .filter(word => word.length > 2);
         
         words.forEach(word => {
             if (!this.searchIndex.has(word)) {
-                this.searchIndex.set(word, []);
+                this.searchIndex.set(word, new Set());
             }
-            this.searchIndex.get(word).push({ id, type });
+            this.searchIndex.get(word).add({ id, type });
         });
     }
 
     /**
-     * Fallback дані для FAQ
+     * Fallback FAQ дані
      */
     getFallbackFAQData() {
         return {
             sections: [
                 {
-                    id: "start",
-                    title: "Початок роботи",
+                    id: "general",
+                    title: "Загальні питання",
                     items: [
                         {
-                            id: "how-to-start",
-                            q: "Як розпочати роботу з SkillKlan?",
-                            a: "SkillKlan - це платформа для навчання та розвитку навичок. Для початку роботи вам потрібно зареєструватися та вибрати курс, який вас цікавить.",
-                            links: ["t.me/skillklan_bot?start=start"]
+                            id: "what-is-skillklan",
+                            q: "Що таке SkillKlan?",
+                            a: "SkillKlan - це інноваційна платформа для навчання та розвитку навичок у сфері технологій.",
+                            links: ["t.me/skillklan_bot?start=about"]
                         },
                         {
-                            id: "registration",
-                            q: "Як зареєструватися?",
-                            a: "Реєстрація проста: натисніть кнопку 'Написати в бот' та слідуйте інструкціям бота.",
-                            links: ["t.me/skillklan_bot?start=register"]
-                        }
-                    ]
-                },
-                {
-                    id: "courses",
-                    title: "Курси та навчання",
-                    items: [
-                        {
-                            id: "course-types",
-                            q: "Які типи курсів доступні?",
-                            a: "У нас є курси з програмування, дизайну, маркетингу та багато інших напрямків. Кожен курс адаптований під різні рівні підготовки.",
-                            links: ["t.me/skillklan_bot?start=courses"]
-                        }
-                    ]
-                },
-                {
-                    id: "support",
-                    title: "Підтримка",
-                    items: [
-                        {
-                            id: "contact-support",
-                            q: "Як зв'язатися з підтримкою?",
-                            a: "Для зв'язку з підтримкою натисніть кнопку 'Написати в бот' внизу сторінки. Наші менеджери відповідають протягом 24 годин.",
-                            links: ["t.me/skillklan_bot?start=support"]
+                            id: "how-to-start",
+                            q: "Як розпочати навчання?",
+                            a: "Для початку навчання зареєструйтеся через бота та пройдіть безкоштовну консультацію.",
+                            links: ["t.me/skillklan_bot?start=consultation"]
                         }
                     ]
                 }
@@ -284,57 +292,16 @@ class FAQMiniApp {
     }
 
     /**
-     * Налаштування UI
-     */
-    setupUI() {
-        // Налаштування кнопки "Назад"
-        const backButton = document.getElementById('backButton');
-        if (backButton) {
-            backButton.addEventListener('click', () => {
-                this.handleBackButton();
-            });
-        }
-
-        // Налаштування головної кнопки
-        const mainButton = document.getElementById('mainButton');
-        if (mainButton) {
-            mainButton.addEventListener('click', () => {
-                this.openBotChat();
-            });
-        }
-    }
-
-    /**
-     * Налаштування пошуку
-     */
-    setupSearch() {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.handleSearch(e.target.value);
-            });
-            
-            // Очищення пошуку при фокусі
-            searchInput.addEventListener('focus', () => {
-                if (searchInput.value === '') {
-                    this.clearSearch();
-                }
-            });
-        }
-    }
-
-    /**
      * Обробка пошуку
      */
     handleSearch(query) {
-        if (!query || query.trim().length < 2) {
-            this.clearSearch();
+        if (!query || query.trim().length === 0) {
+            this.renderFAQ();
             return;
         }
 
-        const searchQuery = query.toLowerCase().trim();
-        const results = this.searchFAQ(searchQuery);
-        this.renderSearchResults(results, searchQuery);
+        const results = this.searchFAQ(query.trim());
+        this.renderSearchResults(results, query);
     }
 
     /**
@@ -342,23 +309,23 @@ class FAQMiniApp {
      */
     searchFAQ(query) {
         const results = new Map();
+        const words = query.toLowerCase().split(/\s+/);
         
-        // Знаходимо всі слова, що відповідають запиту
-        for (const [word, items] of this.searchIndex) {
-            if (word.includes(query) || query.includes(word)) {
-                items.forEach(item => {
+        words.forEach(word => {
+            if (this.searchIndex.has(word)) {
+                this.searchIndex.get(word).forEach(item => {
                     if (!results.has(item.id)) {
                         results.set(item.id, { ...item, score: 0 });
                     }
-                    results.get(item.id).score += 1;
+                    results.get(item.id).score++;
                 });
             }
-        }
+        });
         
         // Сортуємо за релевантністю
         return Array.from(results.values())
             .sort((a, b) => b.score - a.score)
-            .slice(0, 20); // Обмежуємо результати
+            .slice(0, 20);
     }
 
     /**
@@ -366,52 +333,29 @@ class FAQMiniApp {
      */
     renderSearchResults(results, query) {
         const faqContent = document.getElementById('faqContent');
-        if (!faqContent) return;
-
+        
         if (results.length === 0) {
             faqContent.innerHTML = `
                 <div class="empty-state">
-                    <p>За запитом "${query}" нічого не знайдено</p>
-                    <p>Спробуйте інші ключові слова</p>
+                    <h3>🔍 Нічого не знайдено</h3>
+                    <p>За запитом "${query}" нічого не знайдено.</p>
+                    <p>Спробуйте інші ключові слова або зверніться до підтримки.</p>
                 </div>
             `;
             return;
         }
 
-        // Групуємо результати по секціях
         const groupedResults = this.groupSearchResults(results);
-        
-        let html = `<h2>Результати пошуку: "${query}"</h2>`;
-        
-        groupedResults.forEach(section => {
-            html += `
-                <div class="faq-section">
-                    <div class="section-header">
-                        <span>${section.title}</span>
-                        <svg class="expand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
-                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="section-content">
-                        <div class="section-items">
-                            ${section.items.map(item => `
-                                <div class="faq-item">
-                                    <div class="faq-question">
-                                        <span>${item.q}</span>
-                                        <svg class="expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </div>
-                                    <div class="faq-answer">
-                                        <p>${item.a}</p>
-                                        ${this.renderLinks(item.links)}
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
+        let html = `<div class="search-results">
+            <h3>🔍 Результати пошуку: "${query}"</h3>
+            <p>Знайдено ${results.length} результатів</p>
+        </div>`;
+
+        groupedResults.forEach((sectionResults, sectionId) => {
+            const section = this.faqData.sections.find(s => s.id === sectionId);
+            if (section) {
+                html += this.renderSearchSection(section, sectionResults);
+            }
         });
 
         faqContent.innerHTML = html;
@@ -425,36 +369,81 @@ class FAQMiniApp {
         const grouped = new Map();
         
         results.forEach(result => {
-            const [sectionId] = result.id.split('-');
-            const section = this.faqData.sections.find(s => s.id === sectionId);
-            
-            if (section) {
-                if (!grouped.has(sectionId)) {
-                    grouped.set(sectionId, {
-                        id: sectionId,
-                        title: section.title,
-                        items: []
-                    });
-                }
-                
-                // Знаходимо оригінальний item
-                const originalItem = section.items.find(item => 
-                    result.id.includes(item.id) || result.id === `${sectionId}-${item.id}`
-                );
-                
-                if (originalItem) {
-                    grouped.get(sectionId).items.push(originalItem);
-                }
+            const sectionId = this.findSectionId(result.id);
+            if (!grouped.has(sectionId)) {
+                grouped.set(sectionId, []);
             }
+            grouped.get(sectionId).push(result);
         });
         
-        return Array.from(grouped.values());
+        return grouped;
+    }
+
+    /**
+     * Пошук ID секції для елемента
+     */
+    findSectionId(itemId) {
+        for (const section of this.faqData.sections) {
+            if (section.items && section.items.find(item => item.id === itemId)) {
+                return section.id;
+            }
+        }
+        return 'unknown';
+    }
+
+    /**
+     * Відображення секції результатів пошуку
+     */
+    renderSearchSection(section, results) {
+        let html = `
+            <div class="faq-section">
+                <div class="section-header">
+                    <h3>${section.title}</h3>
+                    <svg class="expand-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="section-content">
+                    <div class="section-items">
+        `;
+
+        results.forEach(result => {
+            const item = this.findFAQItem(result.id);
+            if (item) {
+                html += this.renderFAQItem(item, true);
+            }
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+
+    /**
+     * Пошук FAQ елемента за ID
+     */
+    findFAQItem(itemId) {
+        for (const section of this.faqData.sections) {
+            if (section.items) {
+                const item = section.items.find(item => item.id === itemId);
+                if (item) return item;
+            }
+        }
+        return null;
     }
 
     /**
      * Очищення пошуку
      */
     clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = '';
+        }
         this.renderFAQ();
     }
 
@@ -463,12 +452,12 @@ class FAQMiniApp {
      */
     renderFAQ() {
         const faqContent = document.getElementById('faqContent');
-        if (!faqContent || !this.faqData) return;
-
-        if (!this.faqData.sections || this.faqData.sections.length === 0) {
+        
+        if (!this.faqData || !this.faqData.sections) {
             faqContent.innerHTML = `
                 <div class="empty-state">
-                    <p>FAQ дані недоступні</p>
+                    <h3>❌ Помилка завантаження</h3>
+                    <p>Не вдалося завантажити FAQ дані.</p>
                 </div>
             `;
             return;
@@ -478,29 +467,24 @@ class FAQMiniApp {
         
         this.faqData.sections.forEach(section => {
             html += `
-                <div class="faq-section" id="section-${section.id}">
+                <div class="faq-section" data-section-id="${section.id}">
                     <div class="section-header">
-                        <span>${section.title}</span>
-                        <svg class="expand-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <h3>${section.title}</h3>
+                        <svg class="expand-icon" viewBox="0 0 24 24" fill="none">
                             <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
                     <div class="section-content">
                         <div class="section-items">
-                            ${section.items.map(item => `
-                                <div class="faq-item" id="item-${section.id}-${item.id || Math.random()}">
-                                    <div class="faq-question">
-                                        <span>${item.q}</span>
-                                        <svg class="expand-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                        </svg>
-                                    </div>
-                                    <div class="faq-answer">
-                                        <p>${item.a}</p>
-                                        ${this.renderLinks(item.links)}
-                                    </div>
-                                </div>
-                            `).join('')}
+            `;
+
+            if (section.items) {
+                section.items.forEach(item => {
+                    html += this.renderFAQItem(item);
+                });
+            }
+
+            html += `
                         </div>
                     </div>
                 </div>
@@ -512,21 +496,65 @@ class FAQMiniApp {
     }
 
     /**
+     * Відображення FAQ елемента
+     */
+    renderFAQItem(item, isSearchResult = false) {
+        let html = `
+            <div class="faq-item" data-item-id="${item.id}">
+                <div class="faq-question">
+                    <span>${item.q}</span>
+                    <svg class="expand-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="faq-answer">
+                    <p>${item.a}</p>
+        `;
+
+        if (item.links && item.links.length > 0) {
+            html += this.renderLinks(item.links);
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+
+    /**
      * Відображення посилань
      */
     renderLinks(links) {
         if (!links || links.length === 0) return '';
         
-        return `
-            <div class="faq-links">
-                ${links.map(link => {
-                    if (link.startsWith('t.me/')) {
-                        return `<a href="#" class="faq-link" data-link="${link}">Перейти до бота</a>`;
-                    }
-                    return `<a href="${link}" class="faq-link" target="_blank">Детальніше</a>`;
-                }).join('')}
-            </div>
-        `;
+        let html = '<div class="faq-links">';
+        
+        links.forEach(link => {
+            if (link.includes('t.me/')) {
+                html += `
+                    <a href="${link}" class="faq-link" target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 13V19A2 2 0 0 1 16 21H8A2 2 0 0 1 6 19V13M18 13L13 8M18 13L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Відкрити
+                    </a>
+                `;
+            } else {
+                html += `
+                    <a href="${link}" class="faq-link" target="_blank" rel="noopener">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 13V19A2 2 0 0 1 16 21H8A2 2 0 0 1 6 19V13M18 13L13 8M18 13L13 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Детальніше
+                    </a>
+                `;
+            }
+        });
+        
+        html += '</div>';
+        return html;
     }
 
     /**
@@ -538,6 +566,7 @@ class FAQMiniApp {
             header.addEventListener('click', () => {
                 const section = header.closest('.faq-section');
                 const content = section.querySelector('.section-content');
+                const icon = header.querySelector('.expand-icon');
                 
                 if (content.classList.contains('expanded')) {
                     content.classList.remove('expanded');
@@ -549,11 +578,12 @@ class FAQMiniApp {
             });
         });
 
-        // Обробники для питань
+        // Обробники для питаннь
         document.querySelectorAll('.faq-question').forEach(question => {
             question.addEventListener('click', () => {
                 const item = question.closest('.faq-item');
                 const answer = item.querySelector('.faq-answer');
+                const icon = question.querySelector('.expand-icon');
                 
                 if (answer.classList.contains('expanded')) {
                     answer.classList.remove('expanded');
@@ -566,56 +596,67 @@ class FAQMiniApp {
         });
 
         // Обробники для посилань
-        document.querySelectorAll('.faq-link[data-link]').forEach(link => {
+        document.querySelectorAll('.faq-link').forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const url = link.getAttribute('data-link');
+                const url = link.getAttribute('href');
                 this.openTelegramLink(url);
             });
         });
     }
 
     /**
-     * Відкриття посилання в Telegram
+     * Відкриття Telegram посилання
      */
     openTelegramLink(url) {
-        if (this.tg && this.tg.openTelegramLink) {
-            this.tg.openTelegramLink(url);
-        } else if (this.tg && this.tg.openLink) {
-            this.tg.openLink(url);
+        if (this.telegramUtils) {
+            this.telegramUtils.openTelegramLink(url);
         } else {
-            // Fallback - відкриваємо в новому вікні
             window.open(url, '_blank');
         }
     }
 
     /**
-     * Відкриття чату з ботом
+     * Зв'язок з підтримкою
      */
-    openBotChat() {
-        const botUrl = 'https://t.me/skillklan_bot?start=faq';
-        this.openTelegramLink(botUrl);
+    contactSupport() {
+        if (this.telegramUtils) {
+            this.telegramUtils.showConfirm(
+                'Зв\'язатися з підтримкою?',
+                'Натисніть "Так" щоб перейти до чату з підтримкою.',
+                (confirmed) => {
+                    if (confirmed) {
+                        this.telegramUtils.contactSupport();
+                    }
+                }
+            );
+        }
+    }
+
+    /**
+     * Показати інформацію про школу
+     */
+    showAboutSchool() {
+        if (this.telegramUtils) {
+            this.telegramUtils.showInfo(
+                'Про школу SkillKlan',
+                'SkillKlan - це інноваційна платформа для навчання та розвитку навичок у сфері технологій. Ми пропонуємо практичні курси, які допомагають студентам освоїти сучасні технології та знайти роботу в IT.'
+            );
+        }
     }
 
     /**
      * Налаштування обробників подій
      */
     setupEventHandlers() {
-        // Обробка клавіш
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.handleBackButton();
-            }
+        // Обробка прокрутки для header
+        window.addEventListener('scroll', () => {
+            this.handleScroll();
         });
 
         // Обробка зміни розміру вікна
         window.addEventListener('resize', () => {
-            this.handleViewportChange();
-        });
-
-        // Обробка прокрутки для sticky header
-        window.addEventListener('scroll', () => {
-            this.handleScroll();
+            this.handleResize();
         });
     }
 
@@ -626,52 +667,70 @@ class FAQMiniApp {
         const header = document.querySelector('.header');
         if (header) {
             if (window.scrollY > 10) {
-                header.classList.add('scrolled');
+                header.style.boxShadow = 'var(--shadow-md)';
             } else {
-                header.classList.remove('scrolled');
+                header.style.boxShadow = 'none';
             }
         }
     }
 
     /**
-     * Показ помилки
+     * Обробка зміни розміру вікна
+     */
+    handleResize() {
+        // Адаптація при зміні розміру
+        if (window.innerWidth < 768) {
+            document.body.classList.add('mobile');
+        } else {
+            document.body.classList.remove('mobile');
+        }
+    }
+
+    /**
+     * Показати помилку
      */
     showError(message) {
-        const faqContent = document.getElementById('faqContent');
-        if (faqContent) {
-            faqContent.innerHTML = `
-                <div class="empty-state">
-                    <p>❌ ${message}</p>
-                    <button onclick="location.reload()" class="main-button">Спробувати знову</button>
-                </div>
-            `;
+        if (this.telegramUtils) {
+            this.telegramUtils.showAlert(message);
+        } else {
+            console.error(message);
         }
     }
 
     /**
-     * Аналітика (опціонально)
+     * Оновлення теми
+     */
+    updateTheme() {
+        if (this.tg) {
+            const themeParams = this.tg.themeParams;
+            if (themeParams) {
+                document.documentElement.style.setProperty('--tg-theme-bg-color', themeParams.bg_color);
+                document.documentElement.style.setProperty('--tg-theme-text-color', themeParams.text_color);
+                document.documentElement.style.setProperty('--tg-theme-button-color', themeParams.button_color);
+                document.documentElement.style.setProperty('--tg-theme-button-text-color', themeParams.button_text_color);
+                document.documentElement.style.setProperty('--tg-theme-hint-color', themeParams.hint_color);
+                document.documentElement.style.setProperty('--tg-theme-link-color', themeParams.link_color);
+                document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color);
+            }
+        }
+    }
+
+    /**
+     * Відстеження подій
      */
     trackEvent(eventName, data = {}) {
-        try {
-            // Простий клієнтський трекінг
-            console.log(`Analytics: ${eventName}`, data);
-            
-            // Тут можна додати Google Analytics або інші сервіси
-            if (typeof gtag !== 'undefined') {
-                gtag('event', eventName, data);
-            }
-        } catch (error) {
-            console.warn('Помилка трекінгу:', error);
+        if (this.tg) {
+            this.tg.sendData(JSON.stringify({
+                event: eventName,
+                data: data,
+                timestamp: Date.now()
+            }));
         }
     }
 }
 
 // Ініціалізація додатку після завантаження DOM
 document.addEventListener('DOMContentLoaded', () => {
-    window.faqApp = new FAQMiniApp();
+    new FAQMiniApp();
 });
 
-// Експорт для тестування
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = FAQMiniApp;
-}

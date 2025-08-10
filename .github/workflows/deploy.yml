@@ -87,7 +87,7 @@ jobs:
           USERNAME: ${{ secrets.USERNAME }}
         run: |
           echo "🔗 Testing SSH connection to $USERNAME@$HOST..."
-          ssh -o ConnectTimeout=10 -o BatchMode=yes -p 2222 $USERNAME@$HOST "echo 'SSH connection successful'" || {
+          ssh -o ConnectTimeout=10 -o BatchMode=yes $USERNAME@$HOST "echo 'SSH connection successful'" || {
             echo "❌ SSH connection failed!"
             echo "💡 Possible solutions:"
             echo "   1. Check HOST secret is correct IP: $HOST"
@@ -106,8 +106,8 @@ jobs:
         run: |
           echo "🚀 Starting deployment to $HOST..."
           
-          # Виконання команд на сервері через SSH (порт 2222)
-          ssh -p 2222 $USERNAME@$HOST << 'DEPLOY_SCRIPT'
+          # Виконання команд на сервері через SSH
+          ssh $USERNAME@$HOST << 'DEPLOY_SCRIPT'
             set -e  # Зупинити при помилці
             
             echo "📁 Navigating to deployment directory..."
@@ -158,7 +158,7 @@ jobs:
           echo "🏥 Performing health check..."
           sleep 5
           
-          ssh -p 2222 $USERNAME@$HOST << 'HEALTH_CHECK'
+          ssh $USERNAME@$HOST << 'HEALTH_CHECK'
             cd ${{ env.DEPLOY_PATH }}
             
             # Перевірка що процес запущений
