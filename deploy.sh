@@ -2,6 +2,7 @@
 
 # 🚀 Локальний скрипт деплою для швидкого тестування
 # Використовуйте цей скрипт для деплою без GitHub Actions
+# Оновлено для роботи з приватним репозиторієм
 
 set -e  # Зупинити при помилці
 
@@ -17,6 +18,8 @@ SERVER_HOST="${DEPLOY_HOST:-localhost}"
 SERVER_USER="${DEPLOY_USER:-$USER}"
 DEPLOY_PATH="${DEPLOY_PATH:-/home/roman/apps/tg-onboarding}"
 BOT_TOKEN="${BOT_TOKEN:-}"
+# Використовуємо SSH URL для приватного репозиторію
+REPO_URL="${REPO_URL:-git@github.com:Skill-Klan/tg-onboarding.git}"
 
 # Функції для виводу
 log_info() {
@@ -50,6 +53,19 @@ check_requirements() {
         exit 1
     fi
     
+    if ! command -v git &> /dev/null; then
+        log_error "Git не знайдено!"
+        exit 1
+    fi
+    
+    # Перевірка SSH доступу до GitHub
+    log_info "Перевірка доступу до GitHub..."
+    if ! ssh -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        log_error "Не вдається підключитися до GitHub через SSH!"
+        log_info "Перевірте налаштування SSH ключів"
+        exit 1
+    fi
+    
     log_success "Всі вимоги виконані"
 }
 
@@ -64,10 +80,11 @@ deploy_local() {
     # Клонувати або оновити код
     if [ -d ".git" ]; then
         log_info "Оновлення існуючого репозиторію..."
+        git remote set-url origin "$REPO_URL"
         git pull origin main
     else
-        log_info "Клонування репозиторію..."
-        git clone https://github.com/roman-kharchenko/tg-onboarding.git .
+        log_info "Клонування приватного репозиторію..."
+        git clone "$REPO_URL" .
     fi
     
     # Перейти в директорію бота
@@ -128,11 +145,12 @@ deploy_remote() {
         mkdir -p "$DEPLOY_PATH"
         cd "$DEPLOY_PATH"
         
-        echo "📥 Оновлення коду..."
+        echo "📥 Оновлення коду з приватного репозиторію..."
         if [ -d ".git" ]; then
+            git remote set-url origin "$REPO_URL"
             git pull origin main
         else
-            git clone https://github.com/roman-kharchenko/tg-onboarding.git .
+            git clone "$REPO_URL" .
         fi
         
         echo "📦 Встановлення залежностей..."
@@ -219,6 +237,7 @@ case "${1:-deploy}" in
         echo "  DEPLOY_HOST  - Хост сервера (за замовчуванням: localhost)"
         echo "  DEPLOY_USER  - Користувач на сервері (за замовчуванням: \$USER)"
         echo "  DEPLOY_PATH  - Шлях деплою (за замовчуванням: /home/\$USER/apps/tg-onboarding)"
+        echo "  REPO_URL     - SSH URL приватного репозиторію (за замовчуванням: git@github.com:Skill-Klan/tg-onboarding.git)"
         ;;
     *)
         log_error "Невідома команда: $1"
