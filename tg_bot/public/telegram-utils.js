@@ -18,7 +18,7 @@ class TelegramUtils {
             return;
         }
 
-        // Основні налаштування
+        // Основні налаштування - викликаємо ready() першим
         this.tg.ready();
         this.tg.expand();
 
@@ -27,26 +27,47 @@ class TelegramUtils {
 
         // Налаштування обробників подій
         this.setupEventHandlers();
+
+        // Застосовуємо поточну тему
+        this.updateTheme();
     }
 
     /**
      * Налаштування кнопок відповідно до документації
      */
     setupButtons() {
-        // Main Button (основна кнопка)
+        // Main Button (основна кнопка) - для головної дії
         if (this.tg.MainButton) {
-            this.tg.MainButton.setText('📚 Відкрити FAQ');
+            this.tg.MainButton.setText('💬 Зв\'язатися з підтримкою');
+            this.tg.MainButton.onClick(() => {
+                this.contactSupport();
+            });
             this.tg.MainButton.show();
+        }
+
+        // Back Button (кнопка "назад") - для навігації
+        if (this.tg.BackButton) {
+            this.tg.BackButton.onClick(() => {
+                this.goBack();
+            });
+            // Показуємо тільки коли потрібно
+            this.tg.BackButton.hide();
         }
 
         // Secondary Button (другорядна кнопка, Bot API 7.10+)
         if (this.tg.SecondaryButton) {
-            this.tg.SecondaryButton.setText('💬 Підтримка');
+            this.tg.SecondaryButton.setText('📚 Про школу');
+            this.tg.SecondaryButton.onClick(() => {
+                this.showSchoolInfo();
+            });
             this.tg.SecondaryButton.show();
         }
 
         // Settings Button (кнопка налаштувань, Bot API 7.0+)
         if (this.tg.SettingsButton) {
+            this.tg.SettingsButton.onClick(() => {
+                this.showSettings();
+            });
             this.tg.SettingsButton.show();
         }
     }
@@ -55,25 +76,6 @@ class TelegramUtils {
      * Налаштування обробників подій
      */
     setupEventHandlers() {
-        // Основна кнопка
-        this.tg.onEvent('mainButtonClicked', () => {
-            this.showInfo('FAQ SkillKlan', 'Це сторінка з часто запитуваними питаннями про SkillKlan. Використовуйте пошук або розгортайте секції для знаходження потрібної інформації.');
-        });
-
-        // Другорядна кнопка
-        if (this.tg.SecondaryButton) {
-            this.tg.onEvent('secondaryButtonClicked', () => {
-                this.contactSupport();
-            });
-        }
-
-        // Кнопка налаштувань
-        if (this.tg.SettingsButton) {
-            this.tg.onEvent('settingsButtonClicked', () => {
-                this.showSettings();
-            });
-        }
-
         // Зміна теми
         this.tg.onEvent('themeChanged', () => {
             this.updateTheme();
@@ -87,6 +89,16 @@ class TelegramUtils {
         // Підтвердження закриття
         this.tg.onEvent('closingConfirmationEnabled', () => {
             this.showClosingConfirmation();
+        });
+
+        // Зміна розміру вікна (новий API)
+        this.tg.onEvent('viewportChanged', () => {
+            this.updateViewport();
+        });
+
+        // Зміна теми (новий API)
+        this.tg.onEvent('themeChanged', () => {
+            this.updateTheme();
         });
     }
 
@@ -145,25 +157,52 @@ class TelegramUtils {
     }
 
     /**
-     * Зв'язатися з підтримкою
+     * Зв'язатися з підтримкою через нативний Telegram
      */
     contactSupport() {
-        this.showConfirm(
-            'Зв\'язатися з підтримкою?',
-            'Натисніть "Так" щоб перейти до чату з підтримкою або "Ні" щоб залишитися на сторінці FAQ.',
-            (confirmed) => {
-                if (confirmed) {
-                    // Відправляємо дані в бот
-                    this.tg.sendData('contact_support');
-                    // Показуємо повідомлення про успіх
-                    this.showInfo('Переходимо до чату з підтримкою...');
-                    // Закриваємо Web App
-                    setTimeout(() => {
+        // Використовуємо openTelegramLink для відкриття чату з ботом
+        // Це краще ніж sendData, оскільки користувач залишається в Telegram
+        const botUsername = this.getBotUsername();
+        if (botUsername) {
+            this.tg.openTelegramLink(`https://t.me/${botUsername}?start=support`);
+        } else {
+            // Fallback якщо не можемо отримати username бота
+            this.showConfirm(
+                'Зв\'язатися з підтримкою?',
+                'Натисніть "Так" щоб перейти до чату з підтримкою.',
+                (confirmed) => {
+                    if (confirmed) {
+                        // Спробуємо закрити WebApp і повернутися до бота
                         this.tg.close();
-                    }, 1500);
+                    }
                 }
-            }
+            );
+        }
+    }
+
+    /**
+     * Показати інформацію про школу
+     */
+    showSchoolInfo() {
+        this.showInfo(
+            'Про SkillKlan',
+            'SkillKlan — це IT школа, яка готує спеціалістів у сфері технологій. Ми навчаємо тестуванню (QA), бізнес-аналітиці та backend-розробці. Всі курси доступні онлайн та офлайн в Києві.'
         );
+    }
+
+    /**
+     * Навігація назад
+     */
+    goBack() {
+        // Тут можна додати логіку навігації назад
+        // Наприклад, згорнути розгорнуту секцію
+        const expandedSections = document.querySelectorAll('.section-content.expanded');
+        if (expandedSections.length > 0) {
+            expandedSections.forEach(section => {
+                section.classList.remove('expanded');
+            });
+            this.tg.BackButton.hide();
+        }
     }
 
     /**
@@ -171,6 +210,16 @@ class TelegramUtils {
      */
     showSettings() {
         this.showInfo('Налаштування', 'Тут можна налаштувати параметри додатку. Функція в розробці.');
+    }
+
+    /**
+     * Отримати username бота з initData
+     */
+    getBotUsername() {
+        // Спробуємо отримати username бота з різних джерел
+        return this.tg.initDataUnsafe?.bot?.username || 
+               this.tg.initDataUnsafe?.user?.username ||
+               'SkillKlanBot'; // fallback
     }
 
     /**
@@ -187,6 +236,11 @@ class TelegramUtils {
         document.documentElement.style.setProperty('--tg-theme-button-text-color', themeParams.button_text_color || '#ffffff');
         document.documentElement.style.setProperty('--tg-theme-link-color', themeParams.link_color || '#2481cc');
         document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color || '#f0f0f0');
+
+        // Додатково встановлюємо кольори для кращої інтеграції
+        if (themeParams.secondary_bg_color) {
+            document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', themeParams.secondary_bg_color);
+        }
     }
 
     /**
@@ -194,6 +248,7 @@ class TelegramUtils {
      */
     updateViewport() {
         const viewportHeight = this.tg.viewportHeight;
+        const viewportStableHeight = this.tg.viewportStableHeight;
         
         // Адаптуємо інтерфейс при зміні розміру
         if (viewportHeight < 500) {
@@ -201,6 +256,10 @@ class TelegramUtils {
         } else {
             document.body.style.fontSize = '16px';
         }
+
+        // Встановлюємо CSS змінну для viewport
+        document.documentElement.style.setProperty('--tg-viewport-height', `${viewportHeight}px`);
+        document.documentElement.style.setProperty('--tg-viewport-stable-height', `${viewportStableHeight}px`);
     }
 
     /**
@@ -335,6 +394,24 @@ class TelegramUtils {
      */
     switchInlineQuery(query, chatTypes = []) {
         this.tg.switchInlineQuery(query, chatTypes);
+    }
+
+    /**
+     * Показати BackButton коли потрібно
+     */
+    showBackButton() {
+        if (this.tg.BackButton) {
+            this.tg.BackButton.show();
+        }
+    }
+
+    /**
+     * Приховати BackButton
+     */
+    hideBackButton() {
+        if (this.tg.BackButton) {
+            this.tg.BackButton.hide();
+        }
     }
 }
 

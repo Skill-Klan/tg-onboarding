@@ -13,37 +13,60 @@
             box-sizing: border-box;
         }
 
+        :root {
+            /* Telegram theme variables */
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-secondary-bg-color: #f0f0f0;
+            
+            /* Viewport variables */
+            --tg-viewport-height: 100vh;
+            --tg-viewport-stable-height: 100vh;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
             line-height: 1.6;
             overflow-x: hidden;
+            min-height: var(--tg-viewport-height);
+            transition: all 0.3s ease;
         }
 
         .container {
             max-width: 100%;
             padding: 16px;
             margin: 0 auto;
+            padding-bottom: 80px; /* Місце для MainButton */
         }
 
         .header {
             text-align: center;
             margin-bottom: 24px;
             padding-bottom: 16px;
-            border-bottom: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+            border-bottom: 1px solid var(--tg-theme-hint-color);
+            position: sticky;
+            top: 0;
+            background: var(--tg-theme-bg-color);
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .title {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 8px;
-            color: var(--tg-theme-text-color, #000000);
+            color: var(--tg-theme-text-color);
         }
 
         .subtitle {
             font-size: 16px;
-            color: var(--tg-theme-hint-color, #666666);
+            color: var(--tg-theme-hint-color);
         }
 
         .search-container {
@@ -54,21 +77,22 @@
         .search-input {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid var(--tg-theme-hint-color, #e0e0e0);
+            border: 2px solid var(--tg-theme-hint-color);
             border-radius: 12px;
             font-size: 16px;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            transition: border-color 0.3s ease;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            transition: all 0.3s ease;
         }
 
         .search-input:focus {
             outline: none;
-            border-color: var(--tg-theme-button-color, #2481cc);
+            border-color: var(--tg-theme-button-color);
+            box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.1);
         }
 
         .search-input::placeholder {
-            color: var(--tg-theme-hint-color, #999999);
+            color: var(--tg-theme-hint-color);
         }
 
         .sections {
@@ -77,43 +101,68 @@
 
         .section {
             margin-bottom: 20px;
-            background: var(--tg-theme-bg-color, #ffffff);
+            background: var(--tg-theme-bg-color);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--tg-theme-hint-color);
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
         }
 
         .section-header {
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             padding: 16px;
             font-weight: 600;
             font-size: 18px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .section-header:hover {
-            background: var(--tg-theme-button-color, #1a6bb3);
+            background: var(--tg-theme-button-color);
+            filter: brightness(1.1);
+        }
+
+        .section-header .expand-icon {
+            font-size: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .section-header.expanded .expand-icon {
+            transform: rotate(180deg);
         }
 
         .section-content {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .section-content.expanded {
-            max-height: 1000px;
+            max-height: 2000px;
         }
 
         .question-item {
-            border-bottom: 1px solid var(--tg-theme-hint-color, #f0f0f0);
+            border-bottom: 1px solid var(--tg-theme-hint-color);
             padding: 16px;
+            transition: background-color 0.3s ease;
         }
 
         .question-item:last-child {
             border-bottom: none;
+        }
+
+        .question-item:hover {
+            background: var(--tg-theme-secondary-bg-color);
         }
 
         .question-header {
@@ -127,15 +176,16 @@
         .question-text {
             font-weight: 500;
             font-size: 16px;
-            color: var(--tg-theme-text-color, #000000);
+            color: var(--tg-theme-text-color);
             flex: 1;
             margin-right: 16px;
         }
 
         .expand-icon {
             font-size: 20px;
-            color: var(--tg-theme-hint-color, #666666);
+            color: var(--tg-theme-hint-color);
             transition: transform 0.3s ease;
+            flex-shrink: 0;
         }
 
         .expand-icon.expanded {
@@ -145,45 +195,48 @@
         .answer {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease;
-            color: var(--tg-theme-hint-color, #666666);
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            color: var(--tg-theme-hint-color);
             font-size: 15px;
             line-height: 1.6;
         }
 
         .answer.expanded {
-            max-height: 200px;
+            max-height: 500px;
             margin-top: 12px;
             padding-top: 12px;
-            border-top: 1px solid var(--tg-theme-hint-color, #f0f0f0);
+            border-top: 1px solid var(--tg-theme-hint-color);
         }
 
         .footer {
             text-align: center;
             padding: 24px 0;
-            border-top: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+            border-top: 1px solid var(--tg-theme-hint-color);
+            margin-top: 32px;
         }
 
         .contact-btn {
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .contact-btn:hover {
-            background: var(--tg-theme-button-color, #1a6bb3);
+            background: var(--tg-theme-button-color);
+            filter: brightness(1.1);
+            transform: translateY(-2px);
         }
 
         .no-results {
             text-align: center;
             padding: 40px 20px;
-            color: var(--tg-theme-hint-color, #666666);
+            color: var(--tg-theme-hint-color);
         }
 
         .no-results-icon {
@@ -194,12 +247,12 @@
         .loading {
             text-align: center;
             padding: 40px 20px;
-            color: var(--tg-theme-hint-color, #666666);
+            color: var(--tg-theme-hint-color);
         }
 
         .spinner {
-            border: 3px solid var(--tg-theme-hint-color, #f0f0f0);
-            border-top: 3px solid var(--tg-theme-button-color, #2481cc);
+            border: 3px solid var(--tg-theme-hint-color);
+            border-top: 3px solid var(--tg-theme-button-color);
             border-radius: 50%;
             width: 32px;
             height: 32px;
@@ -212,6 +265,26 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Анімації для плавних переходів */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Адаптивність для різних розмірів екрану */
         @media (max-width: 480px) {
             .container {
                 padding: 12px;
@@ -228,6 +301,20 @@
             
             .question-text {
                 font-size: 15px;
+            }
+
+            .container {
+                padding-bottom: 100px; /* Більше місця для кнопок на малих екранах */
+            }
+        }
+
+        /* Темна тема */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --tg-theme-bg-color: #1a1a1a;
+                --tg-theme-text-color: #ffffff;
+                --tg-theme-hint-color: #888888;
+                --tg-theme-secondary-bg-color: #2a2a2a;
             }
         }
     </style>
@@ -248,9 +335,9 @@
         </div>
 
         <div class="footer">
-            <button class="contact-btn" onclick="contactSupport()">
-                💬 Зв'язатися з підтримкою
-            </button>
+            <p style="color: var(--tg-theme-hint-color); margin-bottom: 16px;">
+                Не знайшли відповідь? Зверніться до нашої підтримки!
+            </p>
         </div>
     </div>
 
@@ -338,6 +425,11 @@
                 const section = data.sections[sectionKey];
                 const sectionElement = createSection(sectionKey, section);
                 container.appendChild(sectionElement);
+                
+                // Додаємо анімацію появи
+                setTimeout(() => {
+                    sectionElement.classList.add('fade-in');
+                }, 100);
             });
         }
 
@@ -347,7 +439,8 @@
             sectionDiv.className = 'section';
             sectionDiv.innerHTML = `
                 <div class="section-header" onclick="toggleSection('${key}')">
-                    ${section.title}
+                    <span>${section.title}</span>
+                    <span class="expand-icon">📖</span>
                 </div>
                 <div class="section-content" id="section-${key}">
                     ${section.questions.map((q, index) => `
@@ -369,7 +462,19 @@
         // Функція для перемикання секцій
         function toggleSection(sectionKey) {
             const content = document.getElementById(`section-${sectionKey}`);
+            const header = content.previousElementSibling;
+            
             content.classList.toggle('expanded');
+            header.classList.toggle('expanded');
+            
+            // Показуємо/приховуємо BackButton
+            if (telegramUtils) {
+                if (content.classList.contains('expanded')) {
+                    telegramUtils.showBackButton();
+                } else {
+                    telegramUtils.hideBackButton();
+                }
+            }
         }
 
         // Функція для перемикання питань
@@ -418,33 +523,11 @@
         function showNoResults() {
             const container = document.getElementById('sectionsContainer');
             container.innerHTML = `
-                <div class="no-results">
+                <div class="no-results fade-in">
                     <div class="no-results-icon">😕</div>
                     <p>Нічого не знайдено. Спробуйте інше питання.</p>
                 </div>
             `;
-        }
-
-        // Функція для зв'язку з підтримкою (використовує нативні методи Telegram)
-        function contactSupport() {
-            if (telegramUtils) {
-                telegramUtils.contactSupport();
-            } else {
-                // Fallback якщо утиліти не завантажилися
-                window.Telegram.WebApp.showConfirm(
-                    'Зв\'язатися з підтримкою?',
-                    'Натисніть "Так" щоб перейти до чату з підтримкою або "Ні" щоб залишитися на сторінці FAQ.',
-                    (confirmed) => {
-                        if (confirmed) {
-                            window.Telegram.WebApp.sendData('contact_support');
-                            window.Telegram.WebApp.showAlert('Переходимо до чату з підтримкою...');
-                            setTimeout(() => {
-                                window.Telegram.WebApp.close();
-                            }, 1500);
-                        }
-                    }
-                );
-            }
         }
 
         // Обробник пошуку
@@ -479,10 +562,21 @@
                 // Включаємо вертикальні свайпи
                 telegramUtils.setVerticalSwipes(true);
                 
+                console.log('Telegram WebApp успішно ініціалізовано');
+                
             } catch (error) {
                 console.error('Помилка ініціалізації Telegram утиліт:', error);
             }
         });
+
+        // Обробка зміни теми
+        if (window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.onEvent('themeChanged', () => {
+                if (telegramUtils) {
+                    telegramUtils.updateTheme();
+                }
+            });
+        }
     </script>
 </body>
 </html>
