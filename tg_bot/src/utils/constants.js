@@ -18,7 +18,10 @@ export const CALLBACK_DATA = {
   SUBMIT_READY: 'submit_ready',
   CHOOSE_TRACK: 'choose_track',
   CHANGE_DIRECTION: 'change_direction',
-  BOOK_INTERVIEW: 'book_interview'
+  BOOK_INTERVIEW: 'book_interview',
+  FAQ_QA: 'faq_qa',
+  FAQ_BA: 'faq_ba',
+  FAQ_BACKEND: 'faq_backend'
 };
 
 // Константи для кнопок клавіатури

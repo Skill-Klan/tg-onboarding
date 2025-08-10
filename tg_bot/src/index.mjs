@@ -17,6 +17,7 @@ import checkContactData from './middleware/checkContactData.js';
 import requestPDF from './handlers/shared/requestPDF.js';
 import changeDirection from './handlers/shared/changeDirection.js';
 import bookInterview from './handlers/shared/bookInterview.js';
+import faqHandler from './handlers/shared/faqHandler.js';
 
 // 🛡️ Налаштування глобальної обробки помилок
 setupGlobalErrorHandling();
@@ -43,6 +44,10 @@ bot.on('contact', checkContactData);
 bot.action('get_test_task', requestPDF);
 bot.action('change_direction', changeDirection);
 bot.action('book_interview', bookInterview);
+
+// FAQ actions
+bot.action(/^faq_(qa|ba|backend)$/, faqHandler);
+bot.action('faq_general', faqHandler);
 
 // 🚀 Безпечний запуск бота з обробкою помилок
 async function startBot() {
