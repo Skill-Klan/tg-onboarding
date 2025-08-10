@@ -15,6 +15,7 @@ import baHandler from './handlers/ba/baHandler.js';
 import backendHandler from './handlers/backend/backendHandler.js';
 import checkContactData from './middleware/checkContactData.js';
 import requestPDF from './handlers/shared/requestPDF.js';
+import { handleFAQWebApp, handleWebAppData } from './handlers/shared/webappHandler.js';
 
 // 🛡️ Налаштування глобальної обробки помилок
 setupGlobalErrorHandling();
@@ -32,10 +33,19 @@ bot.start(startHandler);
 bot.hears('Тестування', qaHandler);
 bot.hears('Бізнес аналітика', baHandler);
 bot.hears('Backend', backendHandler);
+bot.hears('💬 Часто запитують', handleFAQWebApp);
+bot.hears('📚 FAQ', handleFAQWebApp);
 
 bot.on('text', checkContactData);
 bot.on('callback_query', checkContactData);
 bot.on('contact', checkContactData);
+
+// FAQ Web App actions
+bot.action('faq_open', handleFAQWebApp);
+bot.on('web_app_data', handleWebAppData);
+
+// Обробка Web App кнопки
+bot.hears('📚 FAQ', handleFAQWebApp);
 
 bot.action('get_test_task', requestPDF);
 

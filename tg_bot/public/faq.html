@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - SkillKlan</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="telegram-utils.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 16px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color, #000000);
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--tg-theme-hint-color, #666666);
+        }
+
+        .search-container {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--tg-theme-hint-color, #e0e0e0);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #2481cc);
+        }
+
+        .search-input::placeholder {
+            color: var(--tg-theme-hint-color, #999999);
+        }
+
+        .sections {
+            margin-bottom: 24px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            background: var(--tg-theme-bg-color, #ffffff);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            padding: 16px;
+            font-weight: 600;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .section-header:hover {
+            background: var(--tg-theme-button-color, #1a6bb3);
+        }
+
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .section-content.expanded {
+            max-height: 1000px;
+        }
+
+        .question-item {
+            border-bottom: 1px solid var(--tg-theme-hint-color, #f0f0f0);
+            padding: 16px;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 0;
+        }
+
+        .question-text {
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--tg-theme-text-color, #000000);
+            flex: 1;
+            margin-right: 16px;
+        }
+
+        .expand-icon {
+            font-size: 20px;
+            color: var(--tg-theme-hint-color, #666666);
+            transition: transform 0.3s ease;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            color: var(--tg-theme-hint-color, #666666);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .answer.expanded {
+            max-height: 200px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--tg-theme-hint-color, #f0f0f0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            border-top: 1px solid var(--tg-theme-hint-color, #e0e0e0);
+        }
+
+        .contact-btn {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background: var(--tg-theme-button-color, #1a6bb3);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--tg-theme-hint-color, #666666);
+        }
+
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--tg-theme-hint-color, #666666);
+        }
+
+        .spinner {
+            border: 3px solid var(--tg-theme-hint-color, #f0f0f0);
+            border-top: 3px solid var(--tg-theme-button-color, #2481cc);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .title {
+                font-size: 20px;
+            }
+            
+            .section-header {
+                font-size: 16px;
+                padding: 14px;
+            }
+            
+            .question-text {
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">📚 Часто запитують</h1>
+            <p class="subtitle">Відповіді на популярні питання про SkillKlan</p>
+        </div>
+
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="🔍 Пошук питання..." id="searchInput">
+        </div>
+
+        <div class="sections" id="sectionsContainer">
+            <!-- Секції будуть додаватися динамічно -->
+        </div>
+
+        <div class="footer">
+            <button class="contact-btn" onclick="contactSupport()">
+                💬 Зв'язатися з підтримкою
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Ініціалізація Telegram утиліт
+        let telegramUtils;
+
+        // Дані FAQ
+        const faqData = {
+            sections: {
+                general: {
+                    title: '📚 Загальні питання',
+                    questions: [
+                        {
+                            question: 'Що таке SkillKlan?',
+                            answer: 'SkillKlan — це IT школа, яка готує спеціалістів у сфері технологій. Ми навчаємо тестуванню (QA), бізнес-аналітиці та backend-розробці.'
+                        },
+                        {
+                            question: 'Де знаходиться школа?',
+                            answer: 'Наші курси проходять онлайн, що дозволяє навчатися з будь-якої точки світу. Також маємо офлайн заняття в Києві.'
+                        }
+                    ]
+                },
+                registration: {
+                    title: '📝 Реєстрація та вступ',
+                    questions: [
+                        {
+                            question: 'Як записатися на курс?',
+                            answer: 'Просто натисніть кнопку "Реєстрація" у нашому боті, введіть своє ім\'я та номер телефону. Після цього ви отримаєте тестове завдання для перевірки ваших знань.'
+                        },
+                        {
+                            question: 'Що таке тестове завдання?',
+                            answer: 'Це невелике практичне завдання, яке допомагає нам зрозуміти ваш поточний рівень знань та визначити, з чого почати навчання.'
+                        }
+                    ]
+                },
+                courses: {
+                    title: '🎓 Курси та навчання',
+                    questions: [
+                        {
+                            question: 'Скільки триває курс?',
+                            answer: 'Тривалість залежить від напрямку: QA — 3 місяці, Бізнес-аналітика — 4 місяці, Backend — 6 місяців. Заняття проходять 2-3 рази на тиждень.'
+                        },
+                        {
+                            question: 'Чи можна навчатися онлайн?',
+                            answer: 'Так! Всі наші курси доступні онлайн. Ви можете навчатися з дому, роботи або будь-якого місця, де є інтернет.'
+                        }
+                    ]
+                },
+                payment: {
+                    title: '💳 Оплата та ціни',
+                    questions: [
+                        {
+                            question: 'Які способи оплати?',
+                            answer: 'Приймаємо оплату картою, наличними або через банківський переказ. Можна оплатити весь курс одразу або розбити на частини.'
+                        },
+                        {
+                            question: 'Скільки коштує курс?',
+                            answer: 'Вартість залежить від напрямку та тривалості. Детальну інформацію про ціни можна отримати у нашого менеджера після проходження тестового завдання.'
+                        }
+                    ]
+                },
+                support: {
+                    title: '🆘 Підтримка та допомога',
+                    questions: [
+                        {
+                            question: 'Чи надаєте підтримку під час навчання?',
+                            answer: 'Так! У вас буде особистий ментор, який відповідатиме на всі питання. Також є чат з однокурсниками та технічна підтримка.'
+                        },
+                        {
+                            question: 'Чи видаєте сертифікат?',
+                            answer: 'Після успішного завершення курсу ви отримаєте сертифікат SkillKlan, який підтверджує ваші знання та навички.'
+                        }
+                    ]
+                }
+            }
+        };
+
+        // Функція для створення секцій
+        function createSections(data) {
+            const container = document.getElementById('sectionsContainer');
+            container.innerHTML = '';
+
+            Object.keys(data.sections).forEach(sectionKey => {
+                const section = data.sections[sectionKey];
+                const sectionElement = createSection(sectionKey, section);
+                container.appendChild(sectionElement);
+            });
+        }
+
+        // Функція для створення однієї секції
+        function createSection(key, section) {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'section';
+            sectionDiv.innerHTML = `
+                <div class="section-header" onclick="toggleSection('${key}')">
+                    ${section.title}
+                </div>
+                <div class="section-content" id="section-${key}">
+                    ${section.questions.map((q, index) => `
+                        <div class="question-item">
+                            <div class="question-header" onclick="toggleQuestion('${key}-${index}')">
+                                <div class="question-text">${q.question}</div>
+                                <div class="expand-icon" id="icon-${key}-${index}">📖</div>
+                            </div>
+                            <div class="answer" id="answer-${key}-${index}">
+                                ${q.answer}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            return sectionDiv;
+        }
+
+        // Функція для перемикання секцій
+        function toggleSection(sectionKey) {
+            const content = document.getElementById(`section-${sectionKey}`);
+            content.classList.toggle('expanded');
+        }
+
+        // Функція для перемикання питань
+        function toggleQuestion(questionKey) {
+            const answer = document.getElementById(`answer-${questionKey}`);
+            const icon = document.getElementById(`icon-${questionKey}`);
+            
+            answer.classList.toggle('expanded');
+            icon.classList.toggle('expanded');
+        }
+
+        // Функція пошуку
+        function searchQuestions(query) {
+            if (!query.trim()) {
+                createSections(faqData);
+                return;
+            }
+
+            const filteredData = {
+                sections: {}
+            };
+
+            Object.keys(faqData.sections).forEach(sectionKey => {
+                const section = faqData.sections[sectionKey];
+                const filteredQuestions = section.questions.filter(q => 
+                    q.question.toLowerCase().includes(query.toLowerCase()) ||
+                    q.answer.toLowerCase().includes(query.toLowerCase())
+                );
+
+                if (filteredQuestions.length > 0) {
+                    filteredData.sections[sectionKey] = {
+                        title: section.title,
+                        questions: filteredQuestions
+                    };
+                }
+            });
+
+            if (Object.keys(filteredData.sections).length === 0) {
+                showNoResults();
+            } else {
+                createSections(filteredData);
+            }
+        }
+
+        // Показати повідомлення про відсутність результатів
+        function showNoResults() {
+            const container = document.getElementById('sectionsContainer');
+            container.innerHTML = `
+                <div class="no-results">
+                    <div class="no-results-icon">😕</div>
+                    <p>Нічого не знайдено. Спробуйте інше питання.</p>
+                </div>
+            `;
+        }
+
+        // Функція для зв'язку з підтримкою (використовує нативні методи Telegram)
+        function contactSupport() {
+            if (telegramUtils) {
+                telegramUtils.contactSupport();
+            } else {
+                // Fallback якщо утиліти не завантажилися
+                window.Telegram.WebApp.showConfirm(
+                    'Зв\'язатися з підтримкою?',
+                    'Натисніть "Так" щоб перейти до чату з підтримкою або "Ні" щоб залишитися на сторінці FAQ.',
+                    (confirmed) => {
+                        if (confirmed) {
+                            window.Telegram.WebApp.sendData('contact_support');
+                            window.Telegram.WebApp.showAlert('Переходимо до чату з підтримкою...');
+                            setTimeout(() => {
+                                window.Telegram.WebApp.close();
+                            }, 1500);
+                        }
+                    }
+                );
+            }
+        }
+
+        // Обробник пошуку
+        let searchTimeout;
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchQuestions(e.target.value);
+            }, 300);
+        });
+
+        // Ініціалізація при завантаженні
+        document.addEventListener('DOMContentLoaded', () => {
+            createSections(faqData);
+            
+            // Ініціалізуємо Telegram утиліти
+            try {
+                telegramUtils = new TelegramUtils();
+                
+                // Налаштовуємо додаткові параметри
+                if (telegramUtils.tg.setHeaderColor) {
+                    telegramUtils.setHeaderColor('#2481cc');
+                }
+                
+                if (telegramUtils.tg.setBottomBarColor) {
+                    telegramUtils.setBottomBarColor('#f8f9fa');
+                }
+                
+                // Включаємо підтвердження закриття
+                telegramUtils.setClosingConfirmation(true);
+                
+                // Включаємо вертикальні свайпи
+                telegramUtils.setVerticalSwipes(true);
+                
+            } catch (error) {
+                console.error('Помилка ініціалізації Telegram утиліт:', error);
+            }
+        });
+    </script>
+</body>
+</html>

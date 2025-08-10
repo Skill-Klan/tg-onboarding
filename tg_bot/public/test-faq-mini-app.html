@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Тест FAQ Mini App - SkillKlan</title>
+    <link rel="stylesheet" href="faq-mini-app.css">
+    <style>
+        /* Додаткові стилі для тестування */
+        .test-info {
+            background: #f0f8ff;
+            border: 1px solid #0066cc;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px;
+            text-align: center;
+        }
+        
+        .test-info h2 {
+            color: #0066cc;
+            margin-bottom: 8px;
+        }
+        
+        .test-info p {
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+        
+        .test-button {
+            padding: 8px 16px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #0052a3;
+        }
+        
+        /* Симуляція Telegram WebApp */
+        .telegram-simulator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #2481cc;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        
+        .telegram-simulator .controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+        
+        .telegram-simulator button {
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .telegram-simulator button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Симулятор Telegram WebApp -->
+    <div class="telegram-simulator">
+        <div>🔧 Тестовий режим - Симуляція Telegram WebApp</div>
+        <div class="controls">
+            <button onclick="toggleTheme()">🌙/☀️ Тема</button>
+            <button onclick="toggleViewport()">📱 Розмір</button>
+            <button onclick="simulateBackButton()">⬅️ Назад</button>
+            <button onclick="simulateExpand()">🔍 Розгорнути</button>
+        </div>
+    </div>
+
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">FAQ</h1>
+                <button id="backButton" class="back-button" aria-label="Назад">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Test Info -->
+        <div class="test-info">
+            <h2>🧪 Тестування FAQ Mini App</h2>
+            <p>Ця сторінка дозволяє протестувати FAQ Mini App без Telegram WebApp</p>
+            <p>Використовуйте кнопки зверху для симуляції різних станів Telegram</p>
+            <div class="test-buttons">
+                <button class="test-button" onclick="testSearch()">🔍 Тест пошуку</button>
+                <button class="test-button" onclick="testAccordion()">📚 Тест акордеону</button>
+                <button class="test-button" onclick="testLinks()">🔗 Тест посилань</button>
+                <button class="test-button" onclick="testResponsive()">📱 Тест responsive</button>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Пошук по FAQ..."
+                aria-label="Пошук по FAQ"
+            >
+        </div>
+
+        <!-- FAQ Content -->
+        <main class="main-content">
+            <div id="faqContent" class="faq-content">
+                <!-- FAQ content will be loaded here -->
+            </div>
+        </main>
+
+        <!-- Bottom Button -->
+        <div class="bottom-button-container">
+            <button id="mainButton" class="main-button">
+                Написати в бот
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Симуляція Telegram WebApp для тестування
+        window.Telegram = {
+            WebApp: {
+                ready: () => console.log('Telegram WebApp ready'),
+                expand: () => console.log('Telegram WebApp expand'),
+                close: () => console.log('Telegram WebApp close'),
+                BackButton: {
+                    show: () => console.log('BackButton show'),
+                    hide: () => console.log('BackButton hide')
+                },
+                MainButton: {
+                    show: () => console.log('MainButton show'),
+                    hide: () => console.log('MainButton hide'),
+                    setText: (text) => console.log('MainButton setText:', text)
+                },
+                onEvent: (event, callback) => {
+                    console.log('Telegram WebApp onEvent:', event);
+                    if (event === 'backButtonClicked') {
+                        window.backButtonCallback = callback;
+                    }
+                },
+                colorScheme: 'light',
+                themeParams: {
+                    bg_color: '#ffffff',
+                    text_color: '#000000',
+                    hint_color: '#999999',
+                    link_color: '#2481cc',
+                    button_color: '#2481cc',
+                    button_text_color: '#ffffff'
+                },
+                viewportHeight: window.innerHeight,
+                viewportStableHeight: window.innerHeight,
+                isExpanded: false,
+                safeAreaInset: {
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0
+                }
+            }
+        };
+
+        // Функції для тестування
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            window.Telegram.WebApp.colorScheme = newTheme;
+            console.log('Тема змінена на:', newTheme);
+        }
+
+        function toggleViewport() {
+            const app = document.getElementById('app');
+            if (app.style.maxWidth === '400px') {
+                app.style.maxWidth = 'none';
+                app.style.margin = '0 auto';
+            } else {
+                app.style.maxWidth = '400px';
+                app.style.margin = '0 auto';
+                app.style.border = '2px solid #ccc';
+            }
+        }
+
+        function simulateBackButton() {
+            if (window.backButtonCallback) {
+                window.backButtonCallback();
+            } else {
+                alert('Кнопка "Назад" натиснута');
+            }
+        }
+
+        function simulateExpand() {
+            window.Telegram.WebApp.isExpanded = !window.Telegram.WebApp.isExpanded;
+            console.log('isExpanded:', window.Telegram.WebApp.isExpanded);
+        }
+
+        function testSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = 'курс';
+            searchInput.dispatchEvent(new Event('input'));
+            console.log('Тест пошуку: "курс"');
+        }
+
+        function testAccordion() {
+            const firstSection = document.querySelector('.faq-section');
+            if (firstSection) {
+                const header = firstSection.querySelector('.section-header');
+                header.click();
+                console.log('Тест акордеону: перша секція розгорнута');
+            }
+        }
+
+        function testLinks() {
+            const firstLink = document.querySelector('.faq-link');
+            if (firstLink) {
+                firstLink.click();
+                console.log('Тест посилань: перше посилання натиснуте');
+            }
+        }
+
+        function testResponsive() {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (viewport.content.includes('width=400')) {
+                viewport.content = 'width=device-width, initial-scale=1.0, user-scalable=no';
+            } else {
+                viewport.content = 'width=400, initial-scale=1.0, user-scalable=no';
+            }
+            console.log('Тест responsive: viewport змінено');
+        }
+    </script>
+
+    <script src="faq-mini-app.js"></script>
+</body>
+</html>

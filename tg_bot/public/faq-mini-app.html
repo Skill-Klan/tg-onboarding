@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FAQ - SkillKlan</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+    <link rel="stylesheet" href="faq-mini-app.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="header-title">FAQ</h1>
+                <button id="backButton" class="back-button" aria-label="Назад">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Search -->
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Пошук по FAQ..."
+                aria-label="Пошук по FAQ"
+            >
+        </div>
+
+        <!-- FAQ Content -->
+        <main class="main-content">
+            <div id="faqContent" class="faq-content">
+                <!-- FAQ content will be loaded here -->
+            </div>
+        </main>
+
+        <!-- Bottom Button -->
+        <div class="bottom-button-container">
+            <button id="mainButton" class="main-button">
+                Написати в бот
+            </button>
+        </div>
+    </div>
+
+    <script src="faq-mini-app.js"></script>
+</body>
+</html>

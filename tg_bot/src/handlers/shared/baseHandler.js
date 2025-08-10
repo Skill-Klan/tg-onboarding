@@ -31,7 +31,8 @@ export default async function baseHandler(ctx, track, texts) {
           keyboard: [
             [KEYBOARD_BUTTONS.TESTING],
             [KEYBOARD_BUTTONS.BUSINESS_ANALYTICS],
-            [KEYBOARD_BUTTONS.BACKEND]
+            [KEYBOARD_BUTTONS.BACKEND],
+            [KEYBOARD_BUTTONS.FAQ]
           ],
           resize_keyboard: true
         },

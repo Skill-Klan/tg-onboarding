@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест модалок без Telegram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #212529;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #6c757d;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #ffffff;
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section h3 {
+            margin-bottom: 15px;
+            color: #212529;
+            font-size: 18px;
+        }
+
+        .test-button {
+            background: #0d6efd;
+            color: #ffffff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .test-button:hover {
+            background: #0b5ed7;
+        }
+
+        .test-button.secondary {
+            background: #6c757d;
+        }
+
+        .test-button.danger {
+            background: #dc3545;
+        }
+
+        .test-button.success {
+            background: #198754;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+
+        .status.success {
+            background: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c2c7;
+        }
+
+        .status.info {
+            background: #cff4fc;
+            color: #055160;
+            border: 1px solid #b6effb;
+        }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #664d03;
+            border: 1px solid #ffecb5;
+        }
+
+        .mock-telegram {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .mock-telegram h4 {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+            color: #495057;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #ffffff;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🧪 Тест модалок без Telegram</h1>
+            <p class="subtitle">Перевірка роботи модальних вікон в браузері</p>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 Статус Telegram Web App</h3>
+            <div id="telegramStatus"></div>
+            <button class="test-button" onclick="checkTelegramStatus()">Перевірити статус</button>
+            <button class="test-button secondary" onclick="mockTelegram()">Симулювати Telegram</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🔘 Тестування кнопок</h3>
+            <button class="test-button" onclick="testMainButton()">Тест Main Button</button>
+            <button class="test-button" onclick="testSecondaryButton()">Тест Secondary Button</button>
+            <button class="test-button" onclick="testSettingsButton()">Тест Settings Button</button>
+        </div>
+
+        <div class="test-section">
+            <h3>💬 Тестування модалок</h3>
+            <button class="test-button" onclick="testShowAlert()">Show Alert</button>
+            <button class="test-button" onclick="testShowConfirm()">Show Confirm</button>
+            <button class="test-button" onclick="testShowPopup()">Show Popup</button>
+            <button class="test-button" onclick="testShowPrompt()">Show Prompt</button>
+        </div>
+
+        <div class="test-section">
+            <h3>🎨 Налаштування теми</h3>
+            <button class="test-button" onclick="setHeaderColor()">Встановити колір заголовка</button>
+            <button class="test-button" onclick="setBottomBarColor()">Встановити колір нижньої панелі</button>
+            <button class="test-button" onclick="toggleVerticalSwipes()">Перемкнути вертикальні свайпи</button>
+            <button class="test-button" onclick="toggleClosingConfirmation()">Перемкнути підтвердження закриття</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Логи та помилки</h3>
+            <div id="logs"></div>
+            <button class="test-button secondary" onclick="clearLogs()">Очистити логи</button>
+            <button class="test-button danger" onclick="testError()">Тест помилки</button>
+        </div>
+    </div>
+
+    <!-- Модальні вікна -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Заголовок</div>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">Текст модального вікна</div>
+            <div class="modal-footer" id="modalFooter">
+                <button class="btn btn-secondary" onclick="closeModal()">Скасувати</button>
+                <button class="btn btn-primary" onclick="confirmModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let telegramUtils;
+        let verticalSwipesEnabled = true;
+        let closingConfirmationEnabled = true;
+        let mockTelegramActive = false;
+
+        // Ініціалізація при завантаженні
+        document.addEventListener('DOMContentLoaded', () => {
+            checkTelegramStatus();
+        });
+
+        // Функція логування
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `status ${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        // Очистити логи
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        // Перевірити статус Telegram
+        function checkTelegramStatus() {
+            const statusDiv = document.getElementById('telegramStatus');
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+                statusDiv.innerHTML = `
+                    <div class="status success">
+                        <strong>✅ Telegram Web App доступний</strong><br>
+                        <strong>🌐 Платформа:</strong> ${window.Telegram.WebApp.platform || 'Невідомо'}<br>
+                        <strong>📱 Версія:</strong> ${window.Telegram.WebApp.version || 'Невідомо'}<br>
+                        <strong>🎨 Тема:</strong> ${window.Telegram.WebApp.colorScheme || 'Світла'}
+                    </div>
+                `;
+                log('Telegram Web App знайдено', 'success');
+                
+                // Ініціалізуємо утиліти
+                try {
+                    telegramUtils = new TelegramUtils();
+                    log('Telegram Utils успішно ініціалізовано', 'success');
+                } catch (error) {
+                    log('Помилка ініціалізації Telegram Utils: ' + error.message, 'error');
+                }
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="status warning">
+                        <strong>⚠️ Telegram Web App не знайдено</strong><br>
+                        Це нормально для тестування в браузері<br>
+                        Натисніть "Симулювати Telegram" для тестування
+                    </div>
+                `;
+                log('Telegram Web App не знайдено - режим тестування', 'warning');
+            }
+        }
+
+        // Симуляція Telegram Web App
+        function mockTelegram() {
+            if (mockTelegramActive) {
+                mockTelegramActive = false;
+                delete window.Telegram;
+                log('Симуляцію Telegram вимкнено', 'info');
+            } else {
+                // Створюємо мок Telegram Web App
+                window.Telegram = {
+                    WebApp: {
+                        ready: () => log('Telegram WebApp.ready() викликано', 'success'),
+                        expand: () => log('Telegram WebApp.expand() викликано', 'success'),
+                        close: () => log('Telegram WebApp.close() викликано', 'success'),
+                        showAlert: (message) => {
+                            log(`showAlert: ${message}`, 'success');
+                            showModal('Повідомлення', message, ['OK']);
+                        },
+                        showConfirm: (message, callback) => {
+                            log(`showConfirm: ${message}`, 'success');
+                            showConfirmModal('Підтвердження', message, callback);
+                        },
+                        showPopup: (options, callback) => {
+                            log(`showPopup: ${JSON.stringify(options)}`, 'success');
+                            showPopupModal(options, callback);
+                        },
+                        sendData: (data) => log(`sendData: ${data}`, 'success'),
+                        platform: 'web',
+                        version: '6.9',
+                        colorScheme: 'light',
+                        themeParams: {
+                            bg_color: '#ffffff',
+                            text_color: '#000000',
+                            hint_color: '#999999',
+                            button_color: '#2481cc',
+                            button_text_color: '#ffffff'
+                        },
+                        MainButton: {
+                            text: '',
+                            show: () => log('MainButton.show() викликано', 'success'),
+                            hide: () => log('MainButton.hide() викликано', 'success'),
+                            setText: (text) => log(`MainButton.setText("${text}") викликано`, 'success'),
+                            onClick: (callback) => log('MainButton.onClick() встановлено', 'success')
+                        },
+                        SecondaryButton: {
+                            text: '',
+                            show: () => log('SecondaryButton.show() викликано', 'success'),
+                            hide: () => log('SecondaryButton.hide() викликано', 'success'),
+                            setText: (text) => log(`SecondaryButton.setText("${text}") викликано`, 'success'),
+                            onClick: (callback) => log('SecondaryButton.onClick() встановлено', 'success')
+                        },
+                        SettingsButton: {
+                            show: () => log('SettingsButton.show() викликано', 'success'),
+                            hide: () => log('SettingsButton.hide() викликано', 'success')
+                        }
+                    }
+                };
+                
+                mockTelegramActive = true;
+                log('Симуляцію Telegram увімкнено', 'success');
+                checkTelegramStatus();
+                
+                // Ініціалізуємо утиліти
+                try {
+                    telegramUtils = new TelegramUtils();
+                    log('Telegram Utils успішно ініціалізовано з моком', 'success');
+                } catch (error) {
+                    log('Помилка ініціалізації Telegram Utils з моком: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Показати модальне вікно
+        function showModal(title, body, buttons = ['OK']) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            
+            const footer = document.getElementById('modalFooter');
+            footer.innerHTML = '';
+            
+            buttons.forEach(btnText => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary';
+                btn.textContent = btnText;
+                btn.onclick = () => closeModal();
+                footer.appendChild(btn);
+            });
+            
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        // Показати модальне вікно підтвердження
+        function showConfirmModal(title, body, callback) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').textContent = body;
+            
+            const footer = document.getElementById('modalFooter');
+            footer.innerHTML = `
+                <button class="btn btn-secondary" onclick="closeModal()">Ні</button>
+                <button class="btn btn-primary" onclick="confirmModalWithCallback(${callback})">Так</button>
+            `;
+            
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        // Показати popup модальне вікно
+        function showPopupModal(options, callback) {
+            document.getElementById('modalTitle').textContent = options.title || 'Popup';
+            document.getElementById('modalBody').textContent = options.message || '';
+            
+            const footer = document.getElementById('modalFooter');
+            footer.innerHTML = '';
+            
+            if (options.buttons) {
+                options.buttons.forEach(btn => {
+                    const btnElement = document.createElement('button');
+                    btnElement.className = `btn ${btn.type === 'ok' ? 'btn-primary' : 'btn-secondary'}`;
+                    btnElement.textContent = btn.text;
+                    btnElement.onclick = () => {
+                        closeModal();
+                        if (callback) callback(btn.id);
+                    };
+                    footer.appendChild(btnElement);
+                });
+            } else {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-primary';
+                btn.textContent = 'OK';
+                btn.onclick = () => closeModal();
+                footer.appendChild(btn);
+            }
+            
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+
+        // Закрити модальне вікно
+        function closeModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+        }
+
+        // Підтвердити модальне вікно з callback
+        function confirmModalWithCallback(callback) {
+            closeModal();
+            if (callback) callback(true);
+        }
+
+        // Тест Main Button
+        function testMainButton() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            telegramUtils.tg.MainButton.setText('Тестова кнопка');
+            telegramUtils.tg.MainButton.show();
+            log('Main Button налаштовано', 'success');
+        }
+
+        // Тест Secondary Button
+        function testSecondaryButton() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            if (telegramUtils.tg.SecondaryButton) {
+                telegramUtils.tg.SecondaryButton.setText('Тестова друга кнопка');
+                telegramUtils.tg.SecondaryButton.show();
+                log('Secondary Button налаштовано', 'success');
+            } else {
+                log('Secondary Button не підтримується в цій версії', 'info');
+            }
+        }
+
+        // Тест Settings Button
+        function testSettingsButton() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            if (telegramUtils.tg.SettingsButton) {
+                telegramUtils.tg.SettingsButton.show();
+                log('Settings Button показано', 'success');
+            } else {
+                log('Settings Button не підтримується в цій версії', 'info');
+            }
+        }
+
+        // Тест Show Alert
+        function testShowAlert() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            telegramUtils.showInfo('Тест', 'Це тестове повідомлення!');
+            log('Show Alert викликано', 'success');
+        }
+
+        // Тест Show Confirm
+        function testShowConfirm() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            telegramUtils.showConfirm(
+                'Тест підтвердження',
+                'Це тест діалогу підтвердження. Натисніть "Так" або "Ні".',
+                (confirmed) => {
+                    if (confirmed) {
+                        log('Користувач підтвердив дію', 'success');
+                    } else {
+                        log('Користувач скасував дію', 'info');
+                    }
+                }
+            );
+            log('Show Confirm викликано', 'success');
+        }
+
+        // Тест Show Popup
+        function testShowPopup() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            telegramUtils.showPopup({
+                title: 'Тест Popup',
+                message: 'Це тест popup з кнопками.',
+                buttons: [
+                    {
+                        id: 'ok',
+                        type: 'ok',
+                        text: 'OK'
+                    },
+                    {
+                        id: 'cancel',
+                        type: 'cancel',
+                        text: 'Скасувати'
+                    }
+                ]
+            }, (buttonId) => {
+                log(`Натиснута кнопка: ${buttonId}`, 'success');
+            });
+            log('Show Popup викликано', 'success');
+        }
+
+        // Тест Show Prompt
+        function testShowPrompt() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            telegramUtils.showPrompt(
+                'Тест Prompt',
+                'Введіть текст:',
+                'Плейсхолдер',
+                (result) => {
+                    log(`Результат prompt: ${result}`, 'success');
+                }
+            );
+            log('Show Prompt викликано', 'success');
+        }
+
+        // Встановити колір заголовка
+        function setHeaderColor() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            const colors = ['#2481cc', '#28a745', '#dc3545', '#ffc107', '#6f42c1'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            telegramUtils.setHeaderColor(randomColor);
+            log(`Колір заголовка встановлено: ${randomColor}`, 'success');
+        }
+
+        // Встановити колір нижньої панелі
+        function setBottomBarColor() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            const colors = ['#f8f9fa', '#e9ecef', '#dee2e6', '#ced4da', '#adb5bd'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            telegramUtils.setBottomBarColor(randomColor);
+            log(`Колір нижньої панелі встановлено: ${randomColor}`, 'success');
+        }
+
+        // Перемкнути вертикальні свайпи
+        function toggleVerticalSwipes() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            verticalSwipesEnabled = !verticalSwipesEnabled;
+            telegramUtils.setVerticalSwipes(verticalSwipesEnabled);
+            log(`Вертикальні свайпи ${verticalSwipesEnabled ? 'увімкнено' : 'вимкнено'}`, 'success');
+        }
+
+        // Перемкнути підтвердження закриття
+        function toggleClosingConfirmation() {
+            if (!telegramUtils) {
+                log('Telegram Utils не ініціалізовано', 'error');
+                return;
+            }
+
+            closingConfirmationEnabled = !closingConfirmationEnabled;
+            telegramUtils.setClosingConfirmation(closingConfirmationEnabled);
+            log(`Підтвердження закриття ${closingConfirmationEnabled ? 'увімкнено' : 'вимкнено'}`, 'success');
+        }
+
+        // Тест помилки
+        function testError() {
+            try {
+                throw new Error('Це тестова помилка для перевірки логування');
+            } catch (error) {
+                log('Помилка: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
