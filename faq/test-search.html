@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест пошуку FAQ</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .test-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-result {
+            background: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">Тест пошуку FAQ</h1>
+            <p class="subtitle">Тестування функціональності динамічного пошуку</p>
+        </header>
+        
+        <div class="test-panel">
+            <h3>Тестові функції</h3>
+            <button class="test-button" onclick="testSearchEngine()">Тест SearchEngine</button>
+            <button class="test-button" onclick="testSearchController()">Тест SearchController</button>
+            <button class="test-button" onclick="testIntegration()">Тест інтеграції</button>
+            <button class="test-button" onclick="clearTestResults()">Очистити результати</button>
+        </div>
+        
+        <div id="test-results" class="test-results"></div>
+        
+        <div class="search-section">
+            <div class="search-container">
+                <input type="text" id="search-input" class="search-input" placeholder="Пошук по питаннях...">
+                <button id="search-button" class="search-button">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+                <button id="clear-search-button" class="clear-search-button" title="Очистити пошук" style="display: none;">
+                    <svg class="clear-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="search-results" class="search-results"></div>
+        </div>
+        
+        <main class="main">
+            <div id="faq-container" class="faq-container">
+                <!-- FAQ контент буде завантажено динамічно -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/dataLoader.js"></script>
+    <script src="js/categoryComponent.js"></script>
+    <script src="js/questionComponent.js"></script>
+    <script src="js/searchEngine.js"></script>
+    <script src="js/searchController.js"></script>
+    <script src="js/searchComponent.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        function addTestResult(title, content) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result';
+            resultDiv.innerHTML = `
+                <strong>${title}</strong><br>
+                <pre>${JSON.stringify(content, null, 2)}</pre>
+            `;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        function clearTestResults() {
+            document.getElementById('test-results').innerHTML = '';
+        }
+        
+        function testSearchEngine() {
+            try {
+                if (!window.faqApp || !window.faqApp.searchEngine) {
+                    addTestResult('SearchEngine Test', { error: 'SearchEngine не ініціалізовано' });
+                    return;
+                }
+                
+                const searchEngine = window.faqApp.searchEngine;
+                const config = searchEngine.getConfig();
+                const stats = searchEngine.getSearchStats('тест');
+                
+                addTestResult('SearchEngine Test', {
+                    config: config,
+                    stats: stats,
+                    isInitialized: !!searchEngine.index
+                });
+            } catch (error) {
+                addTestResult('SearchEngine Test Error', { error: error.message });
+            }
+        }
+        
+        function testSearchController() {
+            try {
+                if (!window.faqApp || !window.faqApp.searchController) {
+                    addTestResult('SearchController Test', { error: 'SearchController не ініціалізовано' });
+                    return;
+                }
+                
+                const searchController = window.faqApp.searchController;
+                const stats = searchController.getSearchStats();
+                
+                addTestResult('SearchController Test', {
+                    stats: stats,
+                    isInitialized: searchController.isInitialized
+                });
+            } catch (error) {
+                addTestResult('SearchController Test Error', { error: error.message });
+            }
+        }
+        
+        function testIntegration() {
+            try {
+                if (!window.faqApp) {
+                    addTestResult('Integration Test', { error: 'FAQ додаток не ініціалізовано' });
+                    return;
+                }
+                
+                const appStats = window.faqApp.getAppStats();
+                const searchComponent = window.faqApp.searchComponent;
+                const searchController = window.faqApp.searchController;
+                
+                addTestResult('Integration Test', {
+                    appStats: appStats,
+                    searchComponentInitialized: searchComponent ? searchComponent.isInitialized : false,
+                    searchControllerInitialized: searchController ? searchController.isInitialized : false,
+                    globalFunctions: {
+                        FAQApp: typeof window.FAQApp !== 'undefined',
+                        faqApp: typeof window.faqApp !== 'undefined'
+                    }
+                });
+            } catch (error) {
+                addTestResult('Integration Test Error', { error: error.message });
+            }
+        }
+        
+        // Автоматичне тестування після завантаження
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testIntegration();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
