@@ -2,11 +2,22 @@
  * 🌐 Telegram Web App конфігурація
  */
 
+// Функція для отримання публічної URL
+function getPublicURL() {
+  // Перевіряємо чи є публічна IP або домен
+  if (process.env.PUBLIC_URL) {
+    return process.env.PUBLIC_URL;
+  }
+  
+  // Для розробки - localhost
+  return 'http://localhost:3000';
+}
+
 export const WEBAPP_CONFIG = {
   // URL для FAQ Web App
   faq: {
-    url: process.env.FAQ_WEBAPP_URL || 'http://localhost:3000/faq.html',
-    fallbackUrl: process.env.FAQ_FALLBACK_URL || 'http://localhost:3000/faq.html',
+    url: process.env.FAQ_WEBAPP_URL || `${getPublicURL()}/faq.html`,
+    fallbackUrl: process.env.FAQ_FALLBACK_URL || `${getPublicURL()}/faq.html`,
     title: 'Часто запитують',
     description: 'Відповіді на популярні питання про SkillKlan'
   },
@@ -60,4 +71,15 @@ export function getFAQWebAppButton() {
  */
 export function getFAQFallbackURL() {
   return WEBAPP_CONFIG.faq.fallbackUrl;
+}
+
+/**
+ * Оновлення URL після отримання публічної адреси
+ */
+export function updateWebAppURL(newURL) {
+  if (newURL && newURL.startsWith('https://')) {
+    WEBAPP_CONFIG.faq.url = `${newURL}/faq.html`;
+    WEBAPP_CONFIG.faq.fallbackUrl = `${newURL}/faq.html`;
+    console.log(`✅ Web App URL оновлено: ${WEBAPP_CONFIG.faq.url}`);
+  }
 }
