@@ -3,10 +3,16 @@
  */
 
 // Функція для отримання публічної URL
+// ✅ ЗМІНЕНО ДЛЯ ДЕПЛОЮ: додано підтримку PUBLIC_IP з .env файлу
 function getPublicURL() {
   // Перевіряємо чи є публічна IP або домен
   if (process.env.PUBLIC_URL) {
     return process.env.PUBLIC_URL;
+  }
+  
+  // Перевіряємо чи є збережена публічна IP
+  if (process.env.PUBLIC_IP) {
+    return `http://${process.env.PUBLIC_IP}:3000`;
   }
   
   // Для розробки - localhost
