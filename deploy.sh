@@ -67,7 +67,7 @@ deploy_local() {
         git pull origin main
     else
         log_info "Клонування репозиторію..."
-        git clone https://github.com/roman-kharchenko/tg-onboarding.git .
+        git clone https://github.com/Skill-Klan/tg-onboarding.git .
     fi
     
     # Перейти в директорію бота
@@ -132,7 +132,7 @@ deploy_remote() {
         if [ -d ".git" ]; then
             git pull origin main
         else
-            git clone https://github.com/roman-kharchenko/tg-onboarding.git .
+            git clone https://github.com/Skill-Klan/tg-onboarding.git .
         fi
         
         echo "📦 Встановлення залежностей..."
