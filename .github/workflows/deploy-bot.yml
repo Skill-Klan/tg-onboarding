@@ -39,12 +39,18 @@ jobs:
             echo "📦 Встановлення залежностей..."
             npm ci --only=production
             
-            # Перезапуск системного сервісу
+            # Перезапуск системного сервісу (без sudo)
             echo "🔄 Перезапуск бота..."
-            sudo systemctl restart skillklan-bot
+            systemctl --user restart skillklan-bot || echo "Помилка перезапуску, спробуємо через sudo"
+            
+            # Якщо не спрацювало, спробуємо через sudo
+            if ! systemctl --user is-active --quiet skillklan-bot; then
+              echo "🔄 Спробуємо через sudo..."
+              sudo systemctl restart skillklan-bot
+            fi
             
             # Перевірка статусу
             echo "✅ Перевірка статусу..."
-            sudo systemctl status skillklan-bot --no-pager
+            systemctl --user status skillklan-bot --no-pager || sudo systemctl status skillklan-bot --no-pager
             
             echo "🎉 Деплой завершено успішно!"
