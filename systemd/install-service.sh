@@ -5,65 +5,25 @@
 
 set -e
 
-# Кольори для виводу
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Функція для логування
-log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
-}
-
-error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
-}
-
-success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-# Перевірка прав доступу
-check_permissions() {
-    if [[ $EUID -ne 0 ]]; then
-        error "Цей скрипт повинен запускатися з правами root (sudo)"
-        exit 1
-    fi
-}
-
-# Перевірка наявності Node.js
-check_nodejs() {
-    if ! command -v node &> /dev/null; then
-        error "Node.js не знайдено. Встановіть Node.js перед продовженням."
-        exit 1
-    fi
-    
-    NODE_VERSION=$(node --version)
-    log "Знайдено Node.js: $NODE_VERSION"
-}
+# Підключення спільних утиліт
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # Створення користувача та групи
 create_user() {
-    if ! id "skillklan-bot" &>/dev/null; then
-        log "Створення користувача skillklan-bot..."
-        useradd --system --shell /bin/false --home-dir /opt/skillklan-bot skillklan-bot
-        success "Користувач skillklan-bot створено"
+    if ! id "$SERVICE_USER" &>/dev/null; then
+        log "Створення користувача $SERVICE_USER..."
+        useradd --system --shell /bin/false --home-dir "$INSTALL_DIR" "$SERVICE_USER"
+        success "Користувач $SERVICE_USER створено"
     else
-        log "Користувач skillklan-bot вже існує"
+        log "Користувач $SERVICE_USER вже існує"
     fi
     
-    if ! getent group "skillklan-bot" &>/dev/null; then
-        log "Створення групи skillklan-bot..."
-        groupadd skillklan-bot
-        success "Група skillklan-bot створено"
+    if ! getent group "$SERVICE_GROUP" &>/dev/null; then
+        log "Створення групи $SERVICE_GROUP..."
+        groupadd "$SERVICE_GROUP"
+        success "Група $SERVICE_GROUP створено"
     else
-        log "Група skillklan-bot вже існує"
+        log "Група $SERVICE_GROUP вже існує"
     fi
 }
 
@@ -71,13 +31,11 @@ create_user() {
 create_directories() {
     log "Створення директорій для бота..."
     
-    mkdir -p /opt/skillklan-bot/{logs,data,config}
-    mkdir -p /opt/skillklan-bot/src
-    
-    # Встановлення прав доступу
-    chown -R skillklan-bot:skillklan-bot /opt/skillklan-bot
-    chmod 755 /opt/skillklan-bot
-    chmod 750 /opt/skillklan-bot/{logs,data,config}
+    safe_mkdir "$INSTALL_DIR" "$SERVICE_USER:$SERVICE_GROUP" "755"
+    safe_mkdir "$INSTALL_DIR/logs" "$SERVICE_USER:$SERVICE_GROUP" "750"
+    safe_mkdir "$INSTALL_DIR/data" "$SERVICE_USER:$SERVICE_GROUP" "750"
+    safe_mkdir "$INSTALL_DIR/config" "$SERVICE_USER:$SERVICE_GROUP" "750"
+    safe_mkdir "$INSTALL_DIR/src" "$SERVICE_USER:$SERVICE_GROUP" "755"
     
     success "Директорії створено та налаштовано"
 }
@@ -87,20 +45,35 @@ copy_project_files() {
     log "Копіювання файлів проекту..."
     
     # Отримуємо шлях до поточної директорії проекту
-    PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+    PROJECT_DIR="$(get_project_dir)"
+    
+    # Перевіряємо існування директорії tg_bot
+    if ! check_directory "$PROJECT_DIR/tg_bot"; then
+        error "Директорія tg_bot не знайдена в $PROJECT_DIR"
+        return 1
+    fi
     
     # Копіюємо основні файли
-    cp -r "$PROJECT_DIR/tg_bot/src" /opt/skillklan-bot/
-    cp -r "$PROJECT_DIR/tg_bot/package.json" /opt/skill-bot/
-    cp -r "$PROJECT_DIR/tg_bot/package-lock.json" /opt/skillklan-bot/
+    cp -r "$PROJECT_DIR/tg_bot/src" "$INSTALL_DIR/"
+    cp "$PROJECT_DIR/tg_bot/package.json" "$INSTALL_DIR/"
+    cp "$PROJECT_DIR/tg_bot/package-lock.json" "$INSTALL_DIR/"
     
-    # Копіюємо конфігурацію
+    # Копіюємо конфігурацію в кореневу директорію (для dotenv)
     if [[ -f "$PROJECT_DIR/tg_bot/.env" ]]; then
-        cp "$PROJECT_DIR/tg_bot/.env" /opt/skillklan-bot/config/
-        chown skillklan-bot:skillklan-bot /opt/skillklan-bot/config/.env
-        chmod 600 /opt/skillklan-bot/config/.env
+        cp "$PROJECT_DIR/tg_bot/.env" "$INSTALL_DIR/"
+        chown "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/.env"
+        chmod 600 "$INSTALL_DIR/.env"
+        success ".env файл скопійовано в кореневу директорію"
     else
-        warning "Файл .env не знайдено. Створіть його вручну в /opt/skillklan-bot/config/"
+        warning "Файл .env не знайдено. Створіть його вручну в $INSTALL_DIR/"
+    fi
+    
+    # Копіюємо .env також в config директорію для зворотної сумісності
+    if [[ -f "$PROJECT_DIR/tg_bot/.env" ]]; then
+        cp "$PROJECT_DIR/tg_bot/.env" "$INSTALL_DIR/config/"
+        chown "$SERVICE_USER:$SERVICE_GROUP" "$INSTALL_DIR/config/.env"
+        chmod 600 "$INSTALL_DIR/config/.env"
+        success ".env файл скопійовано в config директорію"
     fi
     
     success "Файли проекту скопійовано"
@@ -110,8 +83,9 @@ copy_project_files() {
 install_dependencies() {
     log "Встановлення залежностей Node.js..."
     
-    cd /opt/skillklan-bot
+    cd "$INSTALL_DIR"
     npm ci --production
+    cd - > /dev/null  # Повертаємося в початкову директорію
     
     success "Залежності встановлено"
 }
@@ -120,6 +94,9 @@ install_dependencies() {
 install_systemd_service() {
     log "Встановлення systemd сервісу..."
     
+    # Зберігаємо шлях до поточної директорії
+    local current_dir="$(pwd)"
+    
     # Копіюємо файл сервісу
     cp "$(dirname "${BASH_SOURCE[0]}")/skillklan-bot.service" /etc/systemd/system/
     
@@ -127,7 +104,7 @@ install_systemd_service() {
     systemctl daemon-reload
     
     # Включаємо автозапуск
-    systemctl enable skillklan-bot.service
+    systemctl enable "$SERVICE_NAME"
     
     success "Systemd сервіс встановлено та налаштовано"
 }
@@ -137,17 +114,17 @@ setup_logging() {
     log "Налаштування логування..."
     
     # Створюємо logrotate конфігурацію
-    cat > /etc/logrotate.d/skillklan-bot << EOF
-/opt/skillklan-bot/logs/*.log {
+    cat > "/etc/logrotate.d/$SERVICE_USER" << EOF
+$INSTALL_DIR/logs/*.log {
     daily
     missingok
     rotate 7
     compress
     delaycompress
     notifempty
-    create 644 skillklan-bot skillklan-bot
+    create 644 $SERVICE_USER $SERVICE_GROUP
     postrotate
-        systemctl reload skillklan-bot.service
+        systemctl reload $SERVICE_NAME
     endscript
 }
 EOF
@@ -160,31 +137,35 @@ verify_installation() {
     log "Перевірка встановлення..."
     
     # Перевіряємо статус сервісу
-    if systemctl is-enabled skillklan-bot.service &>/dev/null; then
+    if check_autostart; then
         success "Сервіс увімкнено для автозапуску"
     else
         error "Сервіс не увімкнено для автозапуску"
     fi
     
     # Перевіряємо конфігурацію
-    if systemctl cat skillklan-bot.service &>/dev/null; then
+    if validate_config; then
         success "Конфігурація сервісу валідна"
     else
         error "Помилка в конфігурації сервісу"
     fi
     
     log "Встановлення завершено!"
-    log "Для запуску сервісу виконайте: systemctl start skillklan-bot.service"
-    log "Для перевірки статусу: systemctl status skillklan-bot.service"
-    log "Для перегляду логів: journalctl -u skillklan-bot.service -f"
+    log "Для запуску сервісу виконайте: systemctl start $SERVICE_NAME"
+    log "Для перевірки статусу: systemctl status $SERVICE_NAME"
+    log "Для перегляду логів: journalctl -u $SERVICE_NAME -f"
 }
 
 # Головна функція
 main() {
-    log "Початок встановлення SkillKlan Telegram Bot systemd сервісу..."
+    log "Початок встановлення $PROJECT_NAME systemd сервісу..."
     
     check_permissions
-    check_nodejs
+    check_systemd
+    if ! check_nodejs; then
+        error "Node.js не встановлено. Встановіть Node.js перед продовженням."
+        exit 1
+    fi
     create_user
     create_directories
     copy_project_files

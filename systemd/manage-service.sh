@@ -5,48 +5,8 @@
 
 set -e
 
-# Кольори для виводу
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Назва сервісу
-SERVICE_NAME="skillklan-bot.service"
-
-# Функції для логування
-log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1"
-}
-
-error() {
-    echo -e "${RED}[ERROR]${NC} $1" >&2
-}
-
-success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-# Перевірка наявності systemd
-check_systemd() {
-    if ! command -v systemctl &> /dev/null; then
-        error "systemctl не знайдено. Цей скрипт працює тільки з systemd."
-        exit 1
-    fi
-}
-
-# Перевірка наявності сервісу
-check_service() {
-    if ! systemctl list-unit-files | grep -q "$SERVICE_NAME"; then
-        error "Сервіс $SERVICE_NAME не знайдено. Спочатку встановіть його."
-        exit 1
-    fi
-}
+# Підключення спільних утиліт
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
 
 # Функція запуску сервісу
 start_service() {
@@ -134,26 +94,12 @@ follow_logs() {
 check_config() {
     log "Перевірка конфігурації сервісу $SERVICE_NAME..."
     
-    if systemctl cat "$SERVICE_NAME" &>/dev/null; then
-        success "Конфігурація сервісу валідна"
+    if validate_config; then
         echo "----------------------------------------"
         systemctl cat "$SERVICE_NAME"
         echo "----------------------------------------"
     else
-        error "Помилка в конфігурації сервісу"
         return 1
-    fi
-}
-
-# Функція перевірки автозапуску
-check_autostart() {
-    log "Перевірка налаштувань автозапуску..."
-    
-    if systemctl is-enabled "$SERVICE_NAME" &>/dev/null; then
-        success "Сервіс увімкнено для автозапуску"
-    else
-        warning "Сервіс не увімкнено для автозапуску"
-        echo "Для увімкнення виконайте: systemctl enable $SERVICE_NAME"
     fi
 }
 
@@ -169,7 +115,7 @@ check_dependencies() {
 check_resources() {
     log "Перевірка використання ресурсів..."
     
-    if systemctl is-active "$SERVICE_NAME" &>/dev/null; then
+    if check_service_status; then
         local pid=$(systemctl show "$SERVICE_NAME" --property=MainPID --value)
         if [[ -n "$pid" && "$pid" != "0" ]]; then
             echo "PID: $pid"
@@ -214,7 +160,9 @@ EOF
 # Головна функція
 main() {
     check_systemd
-    check_service
+    if ! check_service; then
+        exit 1
+    fi
     
     case "${1:-help}" in
         start)

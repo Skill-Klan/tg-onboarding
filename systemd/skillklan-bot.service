@@ -11,6 +11,7 @@ Group=skillklan-bot
 WorkingDirectory=/opt/skillklan-bot
 Environment=NODE_ENV=production
 Environment=PATH=/usr/bin:/usr/local/bin
+Environment=BOT_TOKEN=7090567151:AAFFBJGbCJMhVuQTdkwmbIRcb2fZDahAzCk
 ExecStart=/usr/bin/node src/index.mjs
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
@@ -24,7 +25,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/skillklan-bot/logs /opt/skillklan-bot/data
+ReadWritePaths=/opt/skillklan-bot/logs /opt/skillklan-bot/data /opt/skillklan-bot/config
 
 # Налаштування ресурсів
 LimitNOFILE=65536
