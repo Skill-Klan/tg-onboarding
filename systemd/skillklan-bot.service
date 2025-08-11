@@ -1,0 +1,34 @@
+[Unit]
+Description=SkillKlan Telegram Bot Service
+Documentation=https://github.com/skillklan/tg-onboarding
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=skillklan-bot
+Group=skillklan-bot
+WorkingDirectory=/opt/skillklan-bot
+Environment=NODE_ENV=production
+Environment=PATH=/usr/bin:/usr/local/bin
+ExecStart=/usr/bin/node src/index.mjs
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=skillklan-bot
+
+# Налаштування безпеки
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/skillklan-bot/logs /opt/skillklan-bot/data
+
+# Налаштування ресурсів
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
