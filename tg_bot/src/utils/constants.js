@@ -8,14 +8,12 @@ export const TRACKS = {
 // Константи для станів очікування
 export const AWAITING_STATES = {
   NAME: 'name',
-  PHONE: 'phone',
-  READY_TO_SUBMIT: 'ready_to_submit'
+  PHONE: 'phone'
 };
 
 // Константи для callback_data
 export const CALLBACK_DATA = {
   GET_TEST_TASK: 'get_test_task',
-  SUBMIT_READY: 'submit_ready',
   CHOOSE_TRACK: 'choose_track',
   CHANGE_DIRECTION: 'change_direction',
   BOOK_INTERVIEW: 'book_interview'

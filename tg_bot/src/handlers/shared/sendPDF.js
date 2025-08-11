@@ -1,5 +1,6 @@
 import commonTexts from '../../texts/common.js';
 import { AWAITING_STATES, CALLBACK_DATA } from '../../utils/constants.js';
+import { getMainKeyboard } from '../../utils/keyboard.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,17 +30,14 @@ export default async function sendPDF(ctx, track) {
     // 4. Надсилання PDF
     await ctx.replyWithDocument({ source: pdfPath });
 
-    // 5. Кнопка окремо
-    ctx.session.awaiting = AWAITING_STATES.READY_TO_SUBMIT;
+    // 5. Скидаємо стан очікування
+    ctx.session.awaiting = null;
 
+    // 6. Показуємо меню вибору напрямків
     await ctx.reply(
-      commonTexts.readyToSubmit,
+      '🔄 Оберіть напрям, що вас цікавить:',
       {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: commonTexts.submitButton, callback_data: CALLBACK_DATA.SUBMIT_READY }]
-          ]
-        },
+        ...getMainKeyboard(),
         parse_mode: 'HTML'
       }
     );

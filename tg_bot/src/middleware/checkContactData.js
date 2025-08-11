@@ -1,6 +1,5 @@
 import askPhone from '../handlers/shared/askPhone.js';
 import sendPDF from '../handlers/shared/sendPDF.js';
-import { sendWebhook } from '../utils/webhook.js';
 import { AWAITING_STATES, CALLBACK_DATA, KEYBOARD_BUTTONS } from '../utils/constants.js';
 
 function canProceed(ctx) {
@@ -109,16 +108,7 @@ export default async function (ctx, next) {
     return;
   }
 
-  // 🔵 Обробка кнопки «Я готовий здати тестове»
-  if (
-    awaiting === AWAITING_STATES.READY_TO_SUBMIT &&
-    ctx.callbackQuery?.data === CALLBACK_DATA.SUBMIT_READY
-  ) {
-    ctx.session.awaiting = null;
 
-    await ctx.answerCbQuery();
-    return sendWebhook(ctx);
-  }
 
   return next();
 }
