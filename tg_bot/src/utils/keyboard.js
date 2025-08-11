@@ -6,8 +6,7 @@ export function getMainKeyboard() {
       keyboard: [
         [KEYBOARD_BUTTONS.TESTING],
         [KEYBOARD_BUTTONS.BUSINESS_ANALYTICS],
-        [KEYBOARD_BUTTONS.BACKEND],
-        [KEYBOARD_BUTTONS.FAQ]
+        [KEYBOARD_BUTTONS.BACKEND]
       ],
       resize_keyboard: true,
       one_time_keyboard: false,
@@ -39,25 +38,6 @@ export function getDirectionActionButtons(track, showChangeDirection = true) {
       callback_data: CALLBACK_DATA.CHANGE_DIRECTION
     }]);
   }
-  
-  // Кнопка FAQ
-  let faqCallback;
-  switch (track) {
-    case 'QA':
-      faqCallback = CALLBACK_DATA.FAQ_QA;
-      break;
-    case 'BA':
-      faqCallback = CALLBACK_DATA.FAQ_BA;
-      break;
-    case 'Backend':
-      faqCallback = CALLBACK_DATA.FAQ_BACKEND;
-      break;
-  }
-  
-  buttons.push([{
-    text: '💬 Часто запитують',
-    callback_data: faqCallback
-  }]);
   
   return {
     reply_markup: {

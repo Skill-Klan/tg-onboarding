@@ -45,3 +45,6 @@ temp/
 # Build outputs
 dist/
 build/
+
+# PDF files
+pdf/
