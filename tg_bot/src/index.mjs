@@ -27,6 +27,30 @@ const bot = new Telegraf(BOT_TOKEN);
 // Ініціалізація сесії
 bot.use(session({ defaultSession: () => ({ tags: {} }) }));
 
+// 🔍 Middleware для логування всіх запитів
+bot.use(async (ctx, next) => {
+  const updateType = ctx.updateType;
+  const updateSubTypes = ctx.updateSubTypes;
+  
+  console.log(`🔍 [${new Date().toISOString()}] Отримано запит:`);
+  console.log(`   Тип: ${updateType}`);
+  console.log(`   Підтипи: ${updateSubTypes?.join(', ') || 'немає'}`);
+  
+  if (ctx.callbackQuery) {
+    console.log(`   Callback data: ${ctx.callbackQuery.data}`);
+    console.log(`   Від користувача: ${ctx.callbackQuery.from.username || ctx.callbackQuery.from.first_name}`);
+  }
+  
+  if (ctx.message?.text) {
+    console.log(`   Текст: ${ctx.message.text}`);
+    console.log(`   Від користувача: ${ctx.message.from.username || ctx.message.from.first_name}`);
+  }
+  
+  console.log('   ---');
+  
+  await next();
+});
+
 // Команда /start
 bot.start(startHandler);
 
