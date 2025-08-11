@@ -15,6 +15,18 @@ export function getMainKeyboard() {
   };
 }
 
+export function getMainInlineKeyboard() {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: KEYBOARD_BUTTONS.TESTING, callback_data: CALLBACK_DATA.CHOOSE_TRACK }],
+        [{ text: KEYBOARD_BUTTONS.BUSINESS_ANALYTICS, callback_data: CALLBACK_DATA.CHOOSE_TRACK }],
+        [{ text: KEYBOARD_BUTTONS.BACKEND, callback_data: CALLBACK_DATA.CHOOSE_TRACK }]
+      ]
+    }
+  };
+}
+
 export function getDirectionActionButtons(track, showChangeDirection = true) {
   const buttons = [];
   
