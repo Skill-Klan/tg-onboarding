@@ -1,4 +1,4 @@
-name: Deploy Bot to Server
+name: Deploy Bot
 
 on:
   push:
@@ -12,9 +12,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -22,35 +19,10 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            set -e
-            echo "🚀 Початок деплою бота..."
-            
-            # Перехід до директорії проекту
+            echo "🚀 Деплой бота..."
             cd /home/roman/Стільниця/projeckt/tg-onboarding
-            
-            # Оновлення коду з GitHub
-            echo "📥 Оновлення коду..."
             git pull origin main
-            
-            # Перехід до директорії бота
             cd tg_bot
-            
-            # Встановлення залежностей
-            echo "📦 Встановлення залежностей..."
             npm ci --only=production
-            
-            # Перезапуск системного сервісу (без sudo)
-            echo "🔄 Перезапуск бота..."
-            systemctl --user restart skillklan-bot || echo "Помилка перезапуску, спробуємо через sudo"
-            
-            # Якщо не спрацювало, спробуємо через sudo
-            if ! systemctl --user is-active --quiet skillklan-bot; then
-              echo "🔄 Спробуємо через sudo..."
-              sudo systemctl restart skillklan-bot
-            fi
-            
-            # Перевірка статусу
-            echo "✅ Перевірка статусу..."
-            systemctl --user status skillklan-bot --no-pager || sudo systemctl status skillklan-bot --no-pager
-            
-            echo "🎉 Деплой завершено успішно!"
+            echo "✅ Код оновлено!"
+            echo "💡 Перезапустіть бота: sudo systemctl restart skillklan-bot"
