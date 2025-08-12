@@ -8,6 +8,10 @@ on:
       - '!tg_bot/pdf/**'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-bot
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -19,10 +23,22 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "🚀 Деплой бота..."
-            cd /home/roman/Стільниця/projeckt/tg-onboarding
-            git pull origin main
+            set -euo pipefail
+            REPO_DIR="/home/roman/Стільниця/projeckt/tg-onboarding"
+            SERVICE="skillklan-bot"
+
+            echo "🚀 Деплой бота…"
+            cd "$REPO_DIR"
+            git fetch --all --prune
+            git checkout main
+            git pull --ff-only origin main
+
             cd tg_bot
-            npm ci --only=production
-            echo "✅ Код оновлено!"
-            echo "💡 Перезапустіть бота: sudo systemctl restart skillklan-bot"
+            npm ci --omit=dev
+
+            echo "🔁 Перезапуск сервісу…"
+            sudo systemctl restart "$SERVICE"
+            sudo systemctl is-active --quiet "$SERVICE" && echo "✅ Сервіс запущено"
+
+            echo "ℹ️ Останні логи:"
+            sudo journalctl -u "$SERVICE" -n 50 --no-pager
