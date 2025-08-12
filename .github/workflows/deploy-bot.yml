@@ -2,11 +2,8 @@ name: Deploy Bot
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'tg_bot/**'
-      - '!tg_bot/pdf/**'
-  workflow_dispatch:
+    branches: [ main ]     # тригер на кожен пуш у main
+  workflow_dispatch:        # можливість запустити вручну
 
 concurrency:
   group: deploy-bot
@@ -21,8 +18,8 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}       # 37.57.209.201
           username: ${{ secrets.SERVER_USER }}   # roman
-          key: ${{ secrets.SERVER_SSH_KEY }}     # приватний вміст ~/.ssh/github_deploy
-          port: 2222                             # ВАЖЛИВО: зовнішній порт на роутері
+          key: ${{ secrets.SERVER_SSH_KEY }}     # приватний ~/.ssh/github_deploy
+          port: 2222                             # зовнішній порт на роутері
           timeout: 2m
           command_timeout: 15m
           script: |
