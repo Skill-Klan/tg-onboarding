@@ -2,8 +2,8 @@ name: Deploy Bot
 
 on:
   push:
-    branches: [ main ]     # тригер на кожен пуш у main
-  workflow_dispatch:        # можливість запустити вручну
+    branches: [ main ]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-bot
@@ -13,32 +13,80 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to server via SSH
+      - name: Deploy to server via SSH (pin to exact commit)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SERVER_HOST }}       # 37.57.209.201
-          username: ${{ secrets.SERVER_USER }}   # roman
-          key: ${{ secrets.SERVER_SSH_KEY }}     # приватний ~/.ssh/github_deploy
-          port: 2222                             # зовнішній порт на роутері
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 2222
           timeout: 2m
           command_timeout: 15m
+          script_stop: true
+          envs: GITHUB_SHA
           script: |
             set -euo pipefail
-            REPO_DIR="/home/roman/Стільниця/projeckt/tg-onboarding"
+
+            # РЕКОМЕНДАЦІЯ: уникай кирилиці та пробілів у шляху для systemd
+            REPO_DIR="/home/roman/apps/tg-onboarding"
             SERVICE="skillklan-bot"
+            SUBDIR="tg_bot"   # якщо package.json лежить у підпапці
+            TARGET_SHA="${GITHUB_SHA}"
 
-            echo "🚀 Деплой бота…"
+            echo "🚀 Деплой бота на SHA $TARGET_SHA"
+
+            # 1) Переконайся, що папка існує і git-репозиторій коректний
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              echo "ℹ️ Репозиторій відсутній — клоную заново…"
+              mkdir -p "$REPO_DIR"
+              git clone --no-tags --filter=blob:none --branch main https://github.com/skillklan/tg-onboarding.git "$REPO_DIR"
+            fi
+
             cd "$REPO_DIR"
-            git fetch --all --prune
-            git checkout main
-            git pull --ff-only origin main
 
-            cd tg_bot
-            npm ci --omit=dev
+            # Дозволити git працювати у каталозі навіть якщо власник відрізняється
+            git config --global --add safe.directory "$REPO_DIR"
 
-            echo "🔁 Перезапуск сервісу…"
+            # 2) Онови ремоут і витягни коміти, але не перемикайся на "останній"
+            git fetch --all --prune --depth=100
+
+            # 3) Жорстко вистав саме той коміт, що запустив workflow
+            echo "🔒 Reset to exact SHA"
+            git checkout --quiet main
+            git reset --hard "$TARGET_SHA"
+
+            # 4) Виведи підтвердження, що ми на правильному коміті
+            CURRENT_SHA="$(git rev-parse HEAD)"
+            echo "Deployed commit: $CURRENT_SHA"
+            test "$CURRENT_SHA" = "$TARGET_SHA"
+
+            # 5) Встановлення прод-залежностей
+            cd "$REPO_DIR/$SUBDIR"
+            export NODE_ENV=production
+            if [ -f package-lock.json ]; then
+              npm ci --omit=dev
+            else
+              npm install --omit=dev
+            fi
+
+            # 6) Перезапуск сервісу
+            echo "🧰 Перезапуск сервісу…"
+            sudo systemctl daemon-reload || true
             sudo systemctl restart "$SERVICE"
-            sudo systemctl is-active --quiet "$SERVICE" && echo "✅ Сервіс запущено"
 
+            # 7) Перевірка, що сервіс активний
+            if sudo systemctl is-active --quiet "$SERVICE"; then
+              echo "✅ Сервіс запущено"
+            else
+              echo "❌ Сервіс не стартував"
+              sudo systemctl status "$SERVICE" --no-pager || true
+              exit 1
+            fi
+
+            # 8) Швидка перевірка робочого каталогу systemd (часта помилка CHDIR)
+            echo "ℹ️ Перевірка робочого каталогу сервісу:"
+            sudo systemctl show "$SERVICE" -p ExecStart -p WorkingDirectory
+
+            # 9) Останні логи для діагностики
             echo "ℹ️ Останні логи:"
-            sudo journalctl -u "$SERVICE" -n 50 --no-pager
+            sudo journalctl -u "$SERVICE" -n 80 --no-pager
